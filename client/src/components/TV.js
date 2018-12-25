@@ -18,68 +18,39 @@ class TV extends Component {
         <div className="tv-layout">
           <div className="tv-left">
             <p>
-              <strong
-                style={{
-                  fontSize: '27px'
-                }}
-              >
-                Score
-              </strong>
-              <ul
-                style={{ textAlign: 'left', width: '200px', margin: 'auto', listStyleType: 'none', fontSize: '20px' }}
-              >
-                <li
-                  style={{
-                    fontSize: '22px'
-                  }}
-                >
-                  Jason: 10000 pts
+              <className="score-header">
+               Score
+              <ul className="scoreboard">
+                <li>Jason: 10000 pts
                 </li>
                 <li>Heather: 5000 pts</li>
               </ul>
             </p>
             <p>
-              <strong
-                style={{
-                  fontSize: '20px'
-                }}
-              >
+              <className="last-clue-header">
                 Last Clue:{' '}
-              </strong>
               <br />
-              <span
-                style={{
-                  fontSize: '23px'
-                }}
+              <span className="last-clue">
               >
                 (Clue 1 Across: Animal)
               </span>
-              <ul
-                style={{ textAlign: 'left', width: '200px', margin: 'auto', listStyleType: 'none', fontSize: '16px' }}
-              >
+              <ul className="last-clue-score">
                 <li>Jason: DOG (0 pts)</li>
                 <li>Heather: CAT (10 pts)</li>
               </ul>
             </p>
-            <p style={{ fontSize: '44px' }}>
-              <strong>
+            <p className="current-clue">
                 Clue 2 Across:
                 <br />
                 TV dinner guest
-              </strong>
             </p>
-            <span style={{ textAlign: 'left', border: '1px black solid', padding: '10px' }}>:30</span>
-            <p
-              style={{
-                fontSize: '23px',
-                marginTop: '45px'
-              }}
-            >
+            <span className="countdown"> }>:30 </span>
+            <p className="game-id">           
               <button is="google-cast-button" />
               <strong>Game ID: BLAH</strong>
             </p>
           </div>
-          <div style={{ flex: '2' }}>
+          <div className="board">
             <Board game={game} />
           </div>
         </div>
