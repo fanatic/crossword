@@ -25,6 +25,7 @@ class Item extends Component {
 class Board extends Component {
   render() {
     const { game } = this.props;
+
     let items = [];
     for (let row = 0; row < game.grid_rows; row++) {
       for (let col = 0; col < game.grid_cols; col++) {
@@ -63,21 +64,46 @@ class Board extends Component {
       gridTemplateColumns: 'repeat(' + game.grid_cols + ', ' + 100 / game.grid_cols + '%)'
     };
 
+    let highlight_style = { opacity: 0 };
+    if (game.current_clue) {
+      const current_clue_label = game.current_clue.description.split('.')[0];
+      const current_clue_direction = game.current_clue.direction;
+      let current_clue_row = 1;
+      let current_clue_col = 1;
+      for (let row = 0; row < game.grid_rows; row++) {
+        for (let col = 0; col < game.grid_cols; col++) {
+          const idx = row * game.grid_rows + (col % game.grid_cols);
+          if (game.grid_nums[idx] === parseInt(current_clue_label)) {
+            current_clue_row = row + 1;
+            current_clue_col = col + 1;
+            console.log(current_clue_row, current_clue_col);
+          }
+        }
+      }
+      if (current_clue_direction === 'across') {
+        highlight_style = {
+          gridColumnStart: current_clue_col,
+          gridColumnEnd: current_clue_col + game.current_clue.answer.length,
+          gridRowStart: current_clue_row,
+          gridRowEnd: current_clue_row
+        };
+      } else {
+        highlight_style = {
+          gridColumnStart: current_clue_col,
+          gridColumnEnd: current_clue_col,
+          gridRowStart: current_clue_row,
+          gridRowEnd: current_clue_row + game.current_clue.answer.length
+        };
+      }
+    }
+
     return (
       <div>
         <div className="crossword-board-container">
           <div className="crossword-board" style={crosswordBoardStyle}>
             {items}
             <div className="crossword-board crossword-board--highlight" style={crosswordBoardStyle}>
-              <span
-                className="crossword-board__item-highlight"
-                style={{
-                  gridColumnStart: 1,
-                  gridColumnEnd: 8,
-                  gridRowStart: 1,
-                  gridRowEnd: 1
-                }}
-              />
+              <span className="crossword-board__item-highlight" style={highlight_style} />
             </div>
 
             <div className="crossword-board crossword-board--labels" style={crosswordBoardStyle}>

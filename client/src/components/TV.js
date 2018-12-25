@@ -34,7 +34,7 @@ export default class TV extends Component {
                   Last Clue: <br />
                 </span>
                 <span className="last-clue">
-                  > ({game.last_clue.number} {game.last_clue.direction} {game.last_clue.description})
+                  {game.last_clue.direction} {game.last_clue.description}
                 </span>
                 <ul className="last-clue-score">
                   {game.last_clue.guesses.map(g => (
@@ -45,13 +45,7 @@ export default class TV extends Component {
                 </ul>
               </p>
             )}
-            {game.current_clue && (
-              <p className="current-clue">
-                Clue {game.current_clue.number} {game.current_clue.direction}:
-                <br />
-                {game.current_clue.description}
-              </p>
-            )}
+            {game.current_clue && <p className="current-clue">{game.current_clue.description}</p>}
             <span className="countdown"> :30 </span>
             <p className="game-id">
               <button is="google-cast-button" />

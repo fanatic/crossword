@@ -32,6 +32,8 @@ class BoardFragment extends Component {
       );
     }
 
+    const label = clue.description.split('.')[0];
+
     const crosswordBoardStyle = {
       width: 50 * cols + 'px',
       height: 50 * rows + 'px',
@@ -55,7 +57,7 @@ class BoardFragment extends Component {
                 }}
                 className={`crossword-board__item-label`}
               >
-                <span className="crossword-board__item-label-text">{clue.number}</span>
+                <span className="crossword-board__item-label-text">{label}</span>
               </span>
             </div>
           </div>
