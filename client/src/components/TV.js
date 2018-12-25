@@ -27,9 +27,10 @@ class TV extends Component {
               </ul>
             </p>
             <p>
-              <className="last-clue-header">
+              <span className="last-clue-header">
                 Last Clue:{' '}
-              <br />
+                <br />
+              </span>
               <span className="last-clue">
               >
                 (Clue 1 Across: Animal)
@@ -44,10 +45,10 @@ class TV extends Component {
                 <br />
                 TV dinner guest
             </p>
-            <span className="countdown"> }>:30 </span>
+            <span className="countdown"> :30 </span>
             <p className="game-id">           
               <button is="google-cast-button" />
-              <strong>Game ID: BLAH</strong>
+              Game ID: BLAH
             </p>
           </div>
           <div className="board-layout">
