@@ -5,4 +5,58 @@
 
 .tv-left {
   flex: 1;
+  justify-content: space-around;
+  display: flex; 
+  flex-direction:column;
+}
+
+.score-header {
+  font-size: 27px;
+  font-weight: bold;
+}
+
+.scoreboard {
+  text-align: left;
+  width: 200px;
+  margin: auto;
+  list-style-type: none;
+  fontSize: 20px;
+}
+  
+.last-clue-header {
+   font-weight: bold;
+   font-size: 20px;
+}
+
+.last-clue {
+  font-size: 20px;
+}
+
+.last-clue-score {
+  text-align: left; 
+  width: 200px;
+  margin: auto; 
+  list-style-type: none;
+  font-size: 16px;
+}
+
+.current-clue {
+  font-size: 44px;
+  font-weight: bold;
+}
+
+.countdown {
+  text-align: left;
+  border: 1px black solid; 
+  padding: 10px; 
+}
+
+.game-id {
+  font-size: 23px;
+  margin-top: 45px;
+  font-weight: bold;
+}
+
+.board-layout {
+  flex: 2;
 }
