@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import { BrowserRouter as Router, Route, Link } from 'react-router-dom';
-import Home from './components/Home';
+import { BrowserRouter as Router, Route } from 'react-router-dom';
+import Debug from './components/Debug';
 
 import './App.css';
 
@@ -10,7 +10,7 @@ class App extends Component {
       <Router>
         <div>
           <h1>Crossword</h1>
-          <ul>
+          {/* <ul>
             <li>
               <Link to="/">Home</Link>
             </li>
@@ -22,9 +22,9 @@ class App extends Component {
             </li>
           </ul>
 
-          <hr />
+          <hr /> */}
 
-          <Route exact path="/" component={Home} />
+          <Route exact path="/" component={Debug} />
         </div>
       </Router>
     );
