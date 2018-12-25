@@ -1,0 +1,8 @@
+.clueBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.clueBox table {
+  width: 100px;
+}
