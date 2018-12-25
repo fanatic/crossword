@@ -50,7 +50,7 @@ class TV extends Component {
               <strong>Game ID: BLAH</strong>
             </p>
           </div>
-          <div className="board">
+          <div className="board-layout">
             <Board game={game} />
           </div>
         </div>
