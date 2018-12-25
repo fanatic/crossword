@@ -5,4 +5,7 @@
 
 .tv-left {
   flex: 1;
+  justify-content: space-around;
+  display: flex; 
+  flex-direction:column;
 }
