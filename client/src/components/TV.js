@@ -17,25 +17,25 @@ class TV extends Component {
         <div style={{ display: 'flex', fontSize: '34px' }}>
           <div style={{ flex: '1' }}>
             <p>
-              <strong style="
-                fontSize: 27px;
+              <strong style={{
+                fontSize: '27px' }}
                 >Score</strong>
               <ul
                 style={{ textAlign: 'left', width: '200px', margin: 'auto', listStyleType: 'none', fontSize: '20px' }}
               >
-                <li style="
-                  fontSize: 22px;
+                <li style={{
+                  fontSize: '22px' }}
                   >Jason: 10000 pts</li>
                 <li>Heather: 5000 pts</li>
               </ul>
             </p>
             <p>
-              <strong style="
-                fontSize: 20px;
-                 >Last Clue: </strong>
+              <strong style={{
+                fontSize: '20px' }}
+                  >Last Clue: </strong>
                  <br>
-                 <span style="
-                    fontSize: 23px;
+                 <span style={{
+                    fontSize: '23px' }}
                  >(Clue 1 Across: Animal)</span>
               <ul
                 style={{ textAlign: 'left', width: '200px', margin: 'auto', listStyleType: 'none', fontSize: '16px' }}
@@ -52,9 +52,9 @@ class TV extends Component {
               </strong>
             </p>
             <span style={{ textAlign: 'left', border: '1px black solid', padding: '10px' }}>:30</span>
-            <p style="
-                fontSize: 23px;
-                marginTop: 45px;
+            <p style={{
+                fontSize: '23px',
+                marginTop: '45px' }}
               >
               <button is="google-cast-button" />
               <strong>Game ID: BLAH</strong>
