@@ -54,6 +54,7 @@
 .game-id {
   font-size: 23px;
   margin-top: 45px;
+  font-weight: bold;
 }
 
 .board-layout {
