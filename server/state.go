@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -31,13 +33,27 @@ type PlayerState struct {
 }
 
 type GuessState struct {
-	GameID        string `dynamo:"GameID,hash"`
-	PlayerName    string `dynamo:",range"`
-	ClueNumber    int    `dynamo:",range"`
-	ClueDirection string `dynamo:",range"`
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
-	Guess         string
+	GameID       string `dynamo:"GameID,hash"`
+	PlayerClueID string `dynamo:",range"`
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	Guess        string
+}
+
+func PlayerClueID(name string, number int, direction string) string {
+	return fmt.Sprintf("%s-%d-%s", name, number, direction)
+}
+
+func (g GuessState) PlayerName() string {
+	return strings.Split(g.PlayerClueID, "-")[0]
+}
+
+func (g GuessState) ClueNumber() int {
+	n, _ := strconv.Atoi(strings.Split(g.PlayerClueID, "-")[1])
+	return n
+}
+func (g GuessState) ClueDirection() string {
+	return strings.Split(g.PlayerClueID, "-")[2]
 }
 
 func (state *State) CreateGame() (string, error) {
@@ -51,6 +67,16 @@ func (state *State) CreateGame() (string, error) {
 		CurrentClueExpiresAt: time.Now().Add(10 * time.Minute),
 	}
 	return id, state.db.Table("GameStates").Put(w).If("attribute_not_exists(ID)").Run()
+}
+
+func (state *State) UpdateGameClue(id string, number int, direction string) error {
+	return state.db.Table("GameStates").
+		Update("ID", id).
+		Set("UpdatedAt", time.Now()).
+		Set("CurrentClueNumber", number).
+		Set("CurrentClueDirection", direction).
+		Set("CurrentClueExpiresAt", time.Now().Add(30*time.Second)).
+		Run()
 }
 
 func (state *State) CreatePlayer(gameID, name string) error {
@@ -73,13 +99,11 @@ func (state *State) CreatePlayer(gameID, name string) error {
 
 func (state *State) CreateGuess(gameID, name string, clueNumber int, clueDirection, guess string) error {
 	w := GuessState{
-		GameID:        gameID,
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
-		PlayerName:    name,
-		ClueNumber:    clueNumber,
-		ClueDirection: clueDirection,
-		Guess:         guess,
+		GameID:       gameID,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+		PlayerClueID: PlayerClueID(name, clueNumber, clueDirection),
+		Guess:        guess,
 	}
 	err := state.db.Table("GuessStates").Put(w).If("attribute_not_exists(Guess)").Run()
 	if err == nil {
@@ -87,9 +111,7 @@ func (state *State) CreateGuess(gameID, name string, clueNumber int, clueDirecti
 	}
 
 	return state.db.Table("GuessStates").Update("GameID", gameID).
-		Range("PlayerName", name).
-		Range("ClueID", clueNumber).
-		Range("ClueDirection", clueDirection).
+		Range("PlayerClueID", PlayerClueID(name, clueNumber, clueDirection)).
 		Set("Guess", guess).
 		Set("UpdatedAt", time.Now()).
 		Run()

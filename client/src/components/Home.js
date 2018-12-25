@@ -86,7 +86,7 @@ class Home extends Component {
 export default connect(props => ({
   postPlayer: (game_id, body, callback) => ({
     postPlayerResponse: {
-      url: `http://localhost:8080/games/${game_id}/players`,
+      url: `http://192.168.3.38:8080/games/${game_id}/players`,
       method: 'POST',
       body: JSON.stringify(body),
       andThen: callback
@@ -94,7 +94,7 @@ export default connect(props => ({
   }),
   postGame: callback => ({
     postGameResponse: {
-      url: `http://localhost:8080/games`,
+      url: `http://192.168.3.38:8080/games`,
       method: 'POST',
       andThen: callback
     }

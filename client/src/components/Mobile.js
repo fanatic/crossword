@@ -29,18 +29,15 @@ class Mobile extends Component {
   handleGuess = event => {
     event.preventDefault();
 
-    this.props.postGuess(
-      this.props.game.id,
-      { player_name: this.props.player_name, guess: this.state.guess },
-      result => {
-        this.props.setGameID(result.id);
-        return {};
-      }
-    );
+    this.props.postGuess(this.props.game.id, { player_name: this.props.player_name, guess: this.state.guess });
   };
 
   render() {
     const { player_name, game } = this.props;
+
+    const all_players = (game.current_players || []).map(p => p.name);
+    const guessed_players = ((game.current_clue || {}).guesses || []).map(g => g.player.name);
+    const missing_players = all_players - guessed_players || [];
 
     return (
       <div>
@@ -56,7 +53,7 @@ class Mobile extends Component {
               <input type="submit" value="Guess" />
             </form>
             <br />
-            <small>Waiting on {game.current_players.map(p => p.name).join(', ')}.</small>
+            <small>Waiting on {missing_players.join(', ')}.</small>
           </React.Fragment>
         )}
       </div>
@@ -65,12 +62,13 @@ class Mobile extends Component {
 }
 
 export default connect(props => ({
-  postGuess: (game_id, body, callback) => ({
+  postGuess: (game_id, body) => ({
     postGuessResponse: {
-      url: `http://localhost:8080/games/${game_id}/guesses`,
+      url: `http://192.168.3.38:8080/games/${game_id}/guesses`,
       method: 'POST',
       body: JSON.stringify(body),
-      andThen: callback
+      force: true,
+      refreshing: true
     }
   })
 }))(Mobile);
