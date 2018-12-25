@@ -37,7 +37,7 @@ export default class TV extends Component {
                   {game.last_clue.direction} {game.last_clue.description}
                 </span>
                 <ul className="last-clue-score">
-                  {game.last_clue.guesses.map(g => (
+                  {(game.last_clue.guesses || []).map(g => (
                     <li key={g.player.name}>
                       {g.player.name}: {g.guess} ({g.score} pts)
                     </li>

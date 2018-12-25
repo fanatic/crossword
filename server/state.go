@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"fmt"
@@ -62,7 +62,7 @@ func (state *State) CreateGame() (string, error) {
 		ID:                   id,
 		CreatedAt:            time.Now(),
 		UpdatedAt:            time.Now(),
-		CurrentClueNumber:    1,
+		CurrentClueNumber:    0,
 		CurrentClueDirection: "across",
 		CurrentClueExpiresAt: time.Now().Add(10 * time.Minute),
 	}
