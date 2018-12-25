@@ -1,0 +1,8 @@
+.tv-layout {
+  display: flex;
+  font-size: 34px;
+}
+
+.tv-left {
+  flex: 1;
+}

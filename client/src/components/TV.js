@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { connect, PromiseState } from 'react-refetch';
 import PropTypes from 'prop-types';
 import Board from './Board';
+import './TV.css';
 
 class TV extends Component {
   static propTypes = {
@@ -14,29 +15,45 @@ class TV extends Component {
     return (
       <div>
         <h2>TV Play</h2>
-        <div style={{ display: 'flex', fontSize: '34px' }}>
-          <div style={{ flex: '1' }}>
+        <div className="tv-layout">
+          <div className="tv-left">
             <p>
-              <strong style={{
-                fontSize: '27px' }}
-                >Score</strong>
+              <strong
+                style={{
+                  fontSize: '27px'
+                }}
+              >
+                Score
+              </strong>
               <ul
                 style={{ textAlign: 'left', width: '200px', margin: 'auto', listStyleType: 'none', fontSize: '20px' }}
               >
-                <li style={{
-                  fontSize: '22px' }}
-                  >Jason: 10000 pts</li>
+                <li
+                  style={{
+                    fontSize: '22px'
+                  }}
+                >
+                  Jason: 10000 pts
+                </li>
                 <li>Heather: 5000 pts</li>
               </ul>
             </p>
             <p>
-              <strong style={{
-                fontSize: '20px' }}
-                  >Last Clue: </strong>
-                 <br>
-                 <span style={{
-                    fontSize: '23px' }}
-                 >(Clue 1 Across: Animal)</span>
+              <strong
+                style={{
+                  fontSize: '20px'
+                }}
+              >
+                Last Clue:{' '}
+              </strong>
+              <br />
+              <span
+                style={{
+                  fontSize: '23px'
+                }}
+              >
+                (Clue 1 Across: Animal)
+              </span>
               <ul
                 style={{ textAlign: 'left', width: '200px', margin: 'auto', listStyleType: 'none', fontSize: '16px' }}
               >
@@ -52,10 +69,12 @@ class TV extends Component {
               </strong>
             </p>
             <span style={{ textAlign: 'left', border: '1px black solid', padding: '10px' }}>:30</span>
-            <p style={{
+            <p
+              style={{
                 fontSize: '23px',
-                marginTop: '45px' }}
-              >
+                marginTop: '45px'
+              }}
+            >
               <button is="google-cast-button" />
               <strong>Game ID: BLAH</strong>
             </p>
