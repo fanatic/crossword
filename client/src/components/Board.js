@@ -5,17 +5,18 @@ class Item extends Component {
   render() {
     const { row, col, val } = this.props;
     if (val === '.') {
-      return <span class="crossword-board__item--blank" id={`item-${row}-${col}`} />;
+      return <span className="crossword-board__item--blank" id={`item-${row}-${col}`} />;
     }
     return (
       <input
         id={`item-${row}-${col}`}
-        class="crossword-board__item"
+        className="crossword-board__item"
         type="text"
-        minlength="1"
-        maxlength="1"
+        minLength="1"
+        maxLength="1"
         required="required"
         value=""
+        readOnly
       />
     );
   }
@@ -27,28 +28,29 @@ class Board extends Component {
     let items = [];
     for (let row = 0; row < game.grid_rows; row++) {
       for (let col = 0; col < game.grid_cols; col++) {
-        items.push(<Item row={row + 1} col={col + 1} val={game.grid[row * game.grid_rows + (col % game.grid_cols)]} />);
+        const idx = row * game.grid_rows + (col % game.grid_cols);
+        items.push(<Item key={idx} row={row + 1} col={col + 1} val={game.grid[idx]} />);
       }
     }
 
     let labels = [];
     for (let row = 0; row < game.grid_rows; row++) {
       for (let col = 0; col < game.grid_cols; col++) {
-        const label = game.grid_nums[row * game.grid_rows + (col % game.grid_cols)];
-        console.log(label);
+        const idx = row * game.grid_rows + (col % game.grid_cols);
+        const label = game.grid_nums[idx];
         if (label === 0) continue;
         labels.push(
           <span
-            id={`label-${label}`}
+            key={`label-${label}`}
             style={{
               gridColumnStart: col + 1,
               gridColumnEnd: col + 1,
               gridRowStart: row + 1,
               gridRowEnd: row + 1
             }}
-            class={`crossword-board__item-label`}
+            className={`crossword-board__item-label`}
           >
-            <span class="crossword-board__item-label-text">{label}</span>
+            <span className="crossword-board__item-label-text">{label}</span>
           </span>
         );
       }
@@ -63,12 +65,12 @@ class Board extends Component {
 
     return (
       <div>
-        <div class="crossword-board-container">
-          <div class="crossword-board" style={crosswordBoardStyle}>
+        <div className="crossword-board-container">
+          <div className="crossword-board" style={crosswordBoardStyle}>
             {items}
-            <div class="crossword-board crossword-board--highlight" style={crosswordBoardStyle}>
+            <div className="crossword-board crossword-board--highlight" style={crosswordBoardStyle}>
               <span
-                class="crossword-board__item-highlight"
+                className="crossword-board__item-highlight"
                 style={{
                   gridColumnStart: 1,
                   gridColumnEnd: 8,
@@ -78,7 +80,7 @@ class Board extends Component {
               />
             </div>
 
-            <div class="crossword-board crossword-board--labels" style={crosswordBoardStyle}>
+            <div className="crossword-board crossword-board--labels" style={crosswordBoardStyle}>
               {labels}
             </div>
           </div>

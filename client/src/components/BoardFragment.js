@@ -20,12 +20,14 @@ class BoardFragment extends Component {
       }
       items.push(
         <input
-          class="crossword-board__item"
+          key={i}
+          className="crossword-board__item"
           type="text"
-          minlength="1"
-          maxlength="1"
+          minLength="1"
+          maxLength="1"
           required="required"
           value={value}
+          readOnly
         />
       );
     }
@@ -39,11 +41,11 @@ class BoardFragment extends Component {
 
     return (
       <div>
-        <div class="crossword-board-container">
-          <div class="crossword-board" style={crosswordBoardStyle}>
+        <div className="crossword-board-container">
+          <div className="crossword-board" style={crosswordBoardStyle}>
             {items}
 
-            <div class="crossword-board crossword-board--labels" style={crosswordBoardStyle}>
+            <div className="crossword-board crossword-board--labels" style={crosswordBoardStyle}>
               <span
                 style={{
                   gridColumnStart: 1,
@@ -51,9 +53,9 @@ class BoardFragment extends Component {
                   gridRowStart: 1,
                   gridRowEnd: 1
                 }}
-                class={`crossword-board__item-label`}
+                className={`crossword-board__item-label`}
               >
-                <span class="crossword-board__item-label-text">{clue.number}</span>
+                <span className="crossword-board__item-label-text">{clue.number}</span>
               </span>
             </div>
           </div>

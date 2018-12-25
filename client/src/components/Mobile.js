@@ -15,9 +15,7 @@ class Mobile extends Component {
       <div>
         <h2>Mobile Play</h2>
         <p>{game.current_clue.description}</p>
-        <p>
-          <BoardFragment clue={game.current_clue} />
-        </p>
+        <BoardFragment clue={game.current_clue} />
         <input type="text" />
         <input type="submit" value="Guess" />
         <br />

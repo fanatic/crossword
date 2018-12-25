@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -196,5 +197,5 @@ func main() {
 	router.HandleFunc("/games/{id}", GetGame(state)).Methods("GET")
 	router.HandleFunc("/games/{id}/players", PostPlayer(state)).Methods("POST")
 	router.HandleFunc("/games/{id}/guesses", PostGuess(state)).Methods("POST")
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(":8080", handlers.CORS(handlers.AllowedHeaders([]string{"Accept", "Accept-Language", "Content-Language", "Origin", "Content-Type"}))(router)))
 }
