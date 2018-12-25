@@ -15,7 +15,7 @@ class Item extends Component {
         minLength="1"
         maxLength="1"
         required="required"
-        value=""
+        value={val}
         readOnly
       />
     );
@@ -76,7 +76,6 @@ class Board extends Component {
           if (game.grid_nums[idx] === parseInt(current_clue_label)) {
             current_clue_row = row + 1;
             current_clue_col = col + 1;
-            console.log(current_clue_row, current_clue_col);
           }
         }
       }

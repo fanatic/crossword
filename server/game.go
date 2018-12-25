@@ -2,6 +2,8 @@ package server
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -19,7 +21,7 @@ type Game struct {
 
 type Player struct {
 	Name         string  `json:"name"`
-	CurrentScore int     `json:"current_score"`
+	CurrentScore int     `json:"current_score,omitempty"`
 	Guesses      []Guess `json:"-"`
 }
 
@@ -34,10 +36,10 @@ type Clue struct {
 	Number           int        `json:"number"`
 	Direction        string     `json:"direction"`
 	Description      string     `json:"description"`
-	Answer           string     `json:"answer"` // ?A?
-	Guesses          []Guess    `json:"guesses"`
-	WaitingOnPlayers []string   `json:"waiting_on_players"`
-	ExpiresAt        *time.Time `json:"expires_at"`
+	Answer           string     `json:"answer,omitempty"` // ?A?
+	Guesses          []Guess    `json:"guesses,omitempty"`
+	WaitingOnPlayers []string   `json:"waiting_on_players,omitempty"`
+	ExpiresAt        *time.Time `json:"expires_at,omitempty"`
 }
 
 func WaitingOnPlayers(currentPlayers []Player, guesses []Guess) []string {
@@ -72,17 +74,6 @@ func FetchGame(state *State, gameID string) (*Game, error) {
 		return nil, err
 	}
 
-	grid := make([]string, len(sampleBoard.Grid))
-	for i := range sampleBoard.Grid {
-		switch sampleBoard.Grid[i] {
-		case ".":
-			grid[i] = "."
-			break
-		default:
-			grid[i] = " "
-		}
-	}
-
 	clueGuesses := map[string][]Guess{}
 	playerGuesses := map[string][]Guess{}
 	for _, guess := range guesses {
@@ -97,6 +88,25 @@ func FetchGame(state *State, gameID string) (*Game, error) {
 		playerGuesses[guess.PlayerName()] = append(playerGuesses[guess.PlayerName()], g)
 	}
 
+	grid := InitializeGrid(sampleBoard.Size.Rows, sampleBoard.Size.Cols, sampleBoard.Grid, sampleBoard.Gridnums)
+	for clueID, guesses := range clueGuesses {
+		n, _ := strconv.Atoi(strings.Split(clueID, "-")[0])
+		d := strings.Split(clueID, "-")[1]
+		for _, guess := range guesses {
+			// If guess is correct, fill in grid with answer
+			answer := strings.ToUpper(guess.Guess)
+			if (d == "across" && answer == sampleBoard.Answers.Across[n]) || (d == "down" && answer == sampleBoard.Answers.Down[n]) {
+				clueLabel := sampleBoard.ClueLabel(n, d)
+				row, col := sampleBoard.ClueLabelPosition(clueLabel)
+				if d == "across" {
+					grid = FillInGridAnswerAcross(row, col, sampleBoard.Size.Rows, sampleBoard.Size.Cols, answer, grid)
+				} else {
+					grid = FillInGridAnswerDown(row, col, sampleBoard.Size.Rows, sampleBoard.Size.Cols, answer, grid)
+				}
+			}
+		}
+	}
+
 	g := Game{
 		ID:             game.ID,
 		Grid:           grid,
@@ -109,6 +119,7 @@ func FetchGame(state *State, gameID string) (*Game, error) {
 	}
 	lastClueID := fmt.Sprintf("%d-%s", g.LastClue.Number, g.LastClue.Direction)
 	g.LastClue.Guesses = clueGuesses[lastClueID]
+	g.LastClue.Answer = ""
 
 	for _, player := range players {
 		g.CurrentPlayers = append(g.CurrentPlayers, Player{
@@ -120,8 +131,64 @@ func FetchGame(state *State, gameID string) (*Game, error) {
 
 	currentClueID := fmt.Sprintf("%d-%s", g.CurrentClue.Number, g.CurrentClue.Direction)
 	g.CurrentClue.WaitingOnPlayers = WaitingOnPlayers(g.CurrentPlayers, clueGuesses[currentClueID])
+	g.CurrentClue.Answer = MaskAnswer(g.CurrentClue.Answer, g.CurrentClue.Number, g.CurrentClue.Direction, grid)
 
 	return &g, nil
+}
+
+func MaskAnswer(answer string, currentClueNumber int, currentClueDirection string, grid []string) string {
+	clueLabel := sampleBoard.ClueLabel(currentClueNumber, currentClueDirection)
+	row, col := sampleBoard.ClueLabelPosition(clueLabel)
+	numRows, numCols := sampleBoard.Size.Rows, sampleBoard.Size.Cols
+
+	a := ""
+	for i := range answer {
+		idx := row*numRows + (col+i)%numCols
+		if currentClueDirection == "down" {
+			idx = (row+i)*numRows + col%numCols
+		}
+		if grid[idx] == " " {
+			a += "?"
+		} else {
+			a += grid[idx]
+		}
+	}
+	return a
+}
+
+func InitializeGrid(numRows, numCols int, grid []string, gridNums []int) []string {
+	g := make([]string, len(grid))
+	for i := 0; i < numRows; i++ {
+		for j := 0; j < numCols; j++ {
+			idx := i*numRows + j%numCols
+			switch grid[idx] {
+			case ".":
+				g[idx] = "."
+				break
+			default:
+				g[idx] = " "
+			}
+		}
+	}
+	return g
+}
+
+func FillInGridAnswerAcross(startRow, startCol, numRows, numCols int, answer string, grid []string) []string {
+	for i := 0; i < len(answer); i++ {
+		row := startRow
+		col := startCol + i
+		grid[row*numRows+col%numCols] = answer[i : i+1]
+	}
+	return grid
+}
+
+func FillInGridAnswerDown(startRow, startCol, numRows, numCols int, answer string, grid []string) []string {
+	for i := 0; i < len(answer); i++ {
+		row := startRow + i
+		col := startCol
+		grid[row*numRows+col%numCols] = answer[i : i+1]
+	}
+	return grid
 }
 
 func IncrementClue(state *State, game *Game) error {

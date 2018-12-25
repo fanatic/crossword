@@ -49,7 +49,14 @@ class Mobile extends Component {
             <p>{game.current_clue.description}</p>
             <BoardFragment clue={game.current_clue} />
             <form onSubmit={this.handleGuess}>
-              <input type="text" name="guess" value={this.state.guess} onChange={this.handleInputChange} />
+              <input
+                type="text"
+                name="guess"
+                value={this.state.guess}
+                onChange={this.handleInputChange}
+                minLength={game.current_clue.answer.length}
+                maxLength={game.current_clue.answer.length}
+              />
               <input type="submit" value="Guess" />
             </form>
             <br />

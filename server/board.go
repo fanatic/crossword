@@ -1,6 +1,10 @@
 package server
 
-import "time"
+import (
+	"strconv"
+	"strings"
+	"time"
+)
 
 type BoardLayout struct {
 	Admin   bool `json:"admin"`
@@ -671,6 +675,27 @@ var sampleBoard = BoardLayout{
 		Rows int `json:"rows"`
 	}{Cols: 15, Rows: 15},
 	Title: "NY TIMES, FRI, MAR 09, 2018",
+}
+
+func (b BoardLayout) ClueLabel(number int, direction string) int {
+	clues := b.Clues.Down
+	if direction == "across" {
+		clues = b.Clues.Across
+	}
+	label := strings.Split(clues[number], ".")[0]
+	labelInt, _ := strconv.Atoi(label)
+	return labelInt
+}
+
+func (b BoardLayout) ClueLabelPosition(clueLabel int) (int, int) {
+	for idx, gridnum := range b.Gridnums {
+		if gridnum == clueLabel {
+			row := idx / b.Size.Rows
+			col := idx % b.Size.Cols
+			return row, col
+		}
+	}
+	return -1, -1
 }
 
 func (b BoardLayout) GetLastClue(number int, direction string) Clue {
