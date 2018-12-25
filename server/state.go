@@ -28,7 +28,16 @@ type PlayerState struct {
 	PlayerName string `dynamo:",range"`
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
-	Guesses    map[string]Guess
+}
+
+type GuessState struct {
+	GameID        string `dynamo:"GameID,hash"`
+	PlayerName    string `dynamo:",range"`
+	ClueNumber    int    `dynamo:",range"`
+	ClueDirection string `dynamo:",range"`
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	Guess         string
 }
 
 func (state *State) CreateGame() (string, error) {
@@ -51,14 +60,37 @@ func (state *State) CreatePlayer(gameID, name string) error {
 		UpdatedAt:  time.Now(),
 		PlayerName: name,
 	}
-	return state.db.Table("PlayerStates").Put(w).If("attribute_not_exists(PlayerName)").Run()
+	err := state.db.Table("PlayerStates").Put(w).If("attribute_not_exists(PlayerName)").Run()
+	if err == nil {
+		return nil
+	}
+
+	return state.db.Table("PlayerStates").Update("GameID", gameID).
+		Range("PlayerName", name).
+		Set("UpdatedAt", time.Now()).
+		Run()
 }
 
-func (state *State) CreateGuess(gameID, name, clueID, guess string) error {
-	return state.db.Table("PlayerStates").
-		Update("GameID", gameID).
+func (state *State) CreateGuess(gameID, name string, clueNumber int, clueDirection, guess string) error {
+	w := GuessState{
+		GameID:        gameID,
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
+		PlayerName:    name,
+		ClueNumber:    clueNumber,
+		ClueDirection: clueDirection,
+		Guess:         guess,
+	}
+	err := state.db.Table("GuessStates").Put(w).If("attribute_not_exists(Guess)").Run()
+	if err == nil {
+		return nil
+	}
+
+	return state.db.Table("GuessStates").Update("GameID", gameID).
 		Range("PlayerName", name).
-		Add("Guesses", map[string]Guess{clueID: Guess{Guess: guess, SubmittedAt: time.Now()}}).
+		Range("ClueID", clueNumber).
+		Range("ClueDirection", clueDirection).
+		Set("Guess", guess).
 		Set("UpdatedAt", time.Now()).
 		Run()
 }
@@ -74,6 +106,14 @@ func (state *State) GetGame(gameID string) (*GameState, error) {
 func (state *State) GetPlayers(gameID string) ([]PlayerState, error) {
 	var result []PlayerState
 	err := state.db.Table("PlayerStates").
+		Get("GameID", gameID).
+		All(&result)
+	return result, err
+}
+
+func (state *State) GetGuesses(gameID string) ([]GuessState, error) {
+	var result []GuessState
+	err := state.db.Table("GuessStates").
 		Get("GameID", gameID).
 		All(&result)
 	return result, err
@@ -96,31 +136,10 @@ func NewState() *State {
 		fmt.Println(err)
 	}
 
-	// table := db.Table("Games")
-
-	// // put item
-	// w := Game{UserID: 613, Time: time.Now(), Msg: "hello"}
-	// err = table.Put(w).If("$ = ?", "Message", w.Msg).Run()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// // get the same item
-	// var result widget
-	// err = table.Get("UserID", w.UserID).
-	// 	Range("Time", dynamo.Equal, w.Time).
-	// 	Filter("'Count' = ? AND $ = ?", w.Count, "Message", w.Msg). // placeholders in expressions
-	// 	One(&result)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// // get all items
-	// var results []widget
-	// err = table.Scan().All(&results)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	err = db.CreateTable("GuessStates", GuessState{}).Run()
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	return &State{
 		db: db,

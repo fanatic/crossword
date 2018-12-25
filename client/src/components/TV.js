@@ -1,12 +1,11 @@
 import React, { Component } from 'react';
-import { connect, PromiseState } from 'react-refetch';
 import PropTypes from 'prop-types';
 import Board from './Board';
 import './TV.css';
 
-class TV extends Component {
+export default class TV extends Component {
   static propTypes = {
-    getGame: PropTypes.instanceOf(PromiseState).isRequired
+    game: PropTypes.object.isRequired
   };
 
   render() {
@@ -25,9 +24,7 @@ class TV extends Component {
               >
                 Score
               </strong>
-              <ul
-                style={{ textAlign: 'left', width: '200px', margin: 'auto', listStyleType: 'none', fontSize: '20px' }}
-              >
+              <ul className="leaderboard-list">
                 <li
                   style={{
                     fontSize: '22px'
@@ -87,5 +84,3 @@ class TV extends Component {
     );
   }
 }
-
-export default connect(props => ({}))(TV);

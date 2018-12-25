@@ -12,7 +12,24 @@ class Home extends Component {
 
   constructor(props) {
     super(props);
-    this.state = { name: '', game_id: '' };
+    let game_id = '';
+    if (props.game) {
+      game_id = props.game.id;
+    }
+    this.state = { name: props.player_name, game_id: game_id };
+  }
+
+  componentWillReceiveProps(newProps) {
+    if (newProps.player_name !== this.props.player_name) {
+      this.setState({ name: newProps.player_name });
+    }
+    if (newProps.game !== this.props.game) {
+      let game_id = '';
+      if (newProps.game) {
+        game_id = newProps.game.id;
+      }
+      this.setState({ game_id });
+    }
   }
 
   handleInputChange = event => {
@@ -28,13 +45,19 @@ class Home extends Component {
   handleHost = event => {
     event.preventDefault();
 
-    this.props.postGame();
+    this.props.postGame(result => {
+      this.props.setGameID(result.id, '');
+      return {};
+    });
   };
 
   handleJoin = event => {
     event.preventDefault();
 
-    this.props.postPlayer(this.state.game_id, { name: this.state.name });
+    this.props.postPlayer(this.state.game_id, { name: this.state.name }, result => {
+      this.props.setGameID(result.id, this.state.name);
+      return {};
+    });
   };
 
   render() {
@@ -61,17 +84,19 @@ class Home extends Component {
 }
 
 export default connect(props => ({
-  postPlayer: (game_id, body) => ({
+  postPlayer: (game_id, body, callback) => ({
     postPlayerResponse: {
       url: `http://localhost:8080/games/${game_id}/players`,
       method: 'POST',
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
+      andThen: callback
     }
   }),
-  postGame: () => ({
+  postGame: callback => ({
     postGameResponse: {
       url: `http://localhost:8080/games`,
-      method: 'POST'
+      method: 'POST',
+      andThen: callback
     }
   })
 }))(Home);

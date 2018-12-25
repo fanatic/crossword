@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gorilla/handlers"
@@ -58,6 +56,11 @@ func FetchGame(state *State, gameID string) (*Game, error) {
 		return nil, err
 	}
 
+	guesses, err := state.GetGuesses(gameID)
+	if err != nil {
+		return nil, err
+	}
+
 	grid := make([]string, len(sampleBoard.Grid))
 	for i := range sampleBoard.Grid {
 		switch sampleBoard.Grid[i] {
@@ -68,6 +71,22 @@ func FetchGame(state *State, gameID string) (*Game, error) {
 			grid[i] = " "
 		}
 	}
+
+	clueGuesses := map[string][]Guess{}
+	playerGuesses := map[string][]Guess{}
+
+	for _, guess := range guesses {
+		g := Guess{
+			Clue:        Clue{Number: guess.ClueNumber, Direction: guess.ClueDirection},
+			Player:      Player{Name: guess.PlayerName},
+			Guess:       guess.Guess,
+			SubmittedAt: guess.UpdatedAt,
+		}
+		clueID := fmt.Sprintf("%d-%s", guess.ClueNumber, guess.ClueDirection)
+		clueGuesses[clueID] = append(clueGuesses[clueID], g)
+		playerGuesses[guess.PlayerName] = append(playerGuesses[guess.PlayerName], g)
+	}
+
 	g := Game{
 		ID:       game.ID,
 		Grid:     grid,
@@ -80,29 +99,15 @@ func FetchGame(state *State, gameID string) (*Game, error) {
 			Description: sampleBoard.Clues.Across[0],
 			Answer:      sampleBoard.Answers.Across[0],
 			ExpiresAt:   time.Now().Add(30 * time.Second),
+			Guesses:     clueGuesses["1-across"],
 		},
 		CurrentPlayers: []Player{},
 	}
-
 	for _, player := range players {
-		guesses := []Guess{}
-		for clueID, guess := range player.Guesses {
-			clueNum, _ := strconv.Atoi(strings.Split(clueID, "-")[0])
-			clueDir := strings.Split(clueID, "-")[1]
-			guesses = append(guesses, Guess{
-				Clue: Clue{
-					Number:    clueNum,
-					Direction: clueDir,
-				},
-				Guess:       guess.Guess,
-				SubmittedAt: guess.SubmittedAt,
-			})
-		}
-
 		g.CurrentPlayers = append(g.CurrentPlayers, Player{
 			Name:         player.PlayerName,
 			CurrentScore: 0,
-			Guesses:      guesses,
+			Guesses:      playerGuesses[player.PlayerName],
 		})
 	}
 
@@ -172,6 +177,39 @@ func PostPlayer(state *State) http.HandlerFunc {
 // PostGuess creates new guess
 func PostGuess(state *State) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		game, err := FetchGame(state, mux.Vars(r)["id"])
+		if err != nil {
+			w.WriteHeader(500)
+			fmt.Fprintf(w, "Error fetching game state: %s", err)
+			return
+		}
+
+		var guessRequest struct {
+			PlayerName string `json:"player_name"`
+			Guess      string `json:"guess"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&guessRequest); err != nil {
+			w.WriteHeader(500)
+			fmt.Fprintf(w, "Error parsing body: %s", err)
+			return
+		}
+
+		err = state.CreateGuess(game.ID, guessRequest.PlayerName, game.CurrentClue.Number, game.CurrentClue.Direction, guessRequest.Guess)
+		if err != nil {
+			w.WriteHeader(500)
+			fmt.Fprintf(w, "Error creating guess: %s", err)
+			return
+		}
+
+		game, err = FetchGame(state, game.ID)
+		if err != nil {
+			w.WriteHeader(500)
+			fmt.Fprintf(w, "Error fetching game state: %s", err)
+			return
+		}
+
+		w.WriteHeader(201)
+		json.NewEncoder(w).Encode(game)
 	}
 }
 
