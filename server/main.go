@@ -18,7 +18,7 @@ type Game struct {
 	GridNums       []int       `json:"grid_nums"`
 	GridRows       int         `json:"grid_rows"`
 	GridCols       int         `json:"grid_cols"`
-	LastClue       *Clue       `json:"last_clue"`
+	LastClue       Clue        `json:"last_clue"`
 	CurrentClue    Clue        `json:"current_clue"`
 	CurrentPlayers []Player    `json:"current_players"`
 }
@@ -31,19 +31,19 @@ type Player struct {
 
 type Guess struct {
 	Player      Player    `json:"player" dynamo:"-"`
-	Clue        Clue      `json:"clue" dynamo:"-"`
+	Clue        Clue      `json:"-" dynamo:"-"`
 	Guess       string    `json:"guess"`
 	SubmittedAt time.Time `json:"submitted_at"`
 }
 
 type Clue struct {
-	Number           int       `json:"number"`
-	Direction        string    `json:"direction"`
-	Description      string    `json:"description"`
-	Answer           string    `json:"answer"` // ?A?
-	Guesses          []Guess   `json:"-"`
-	WaitingOnPlayers []string  `json:"waiting_on_players"`
-	ExpiresAt        time.Time `json:"expires_at"`
+	Number           int        `json:"number"`
+	Direction        string     `json:"direction"`
+	Description      string     `json:"description"`
+	Answer           string     `json:"answer"` // ?A?
+	Guesses          []Guess    `json:"guesses"`
+	WaitingOnPlayers []string   `json:"waiting_on_players"`
+	ExpiresAt        *time.Time `json:"expires_at"`
 }
 
 func WaitingOnPlayers(currentPlayers []Player, guesses []Guess) []string {
@@ -91,7 +91,6 @@ func FetchGame(state *State, gameID string) (*Game, error) {
 
 	clueGuesses := map[string][]Guess{}
 	playerGuesses := map[string][]Guess{}
-
 	for _, guess := range guesses {
 		g := Guess{
 			Clue:        Clue{Number: guess.ClueNumber(), Direction: guess.ClueDirection()},
@@ -104,23 +103,19 @@ func FetchGame(state *State, gameID string) (*Game, error) {
 		playerGuesses[guess.PlayerName()] = append(playerGuesses[guess.PlayerName()], g)
 	}
 
-	currentClueID := fmt.Sprintf("%d-%s", game.CurrentClueNumber, game.CurrentClueDirection)
 	g := Game{
-		ID:       game.ID,
-		Grid:     grid,
-		GridNums: sampleBoard.Gridnums,
-		GridRows: sampleBoard.Size.Rows,
-		GridCols: sampleBoard.Size.Cols,
-		CurrentClue: Clue{
-			Number:      game.CurrentClueNumber,
-			Direction:   game.CurrentClueDirection,
-			Description: sampleBoard.Clues.Across[game.CurrentClueNumber],
-			Answer:      sampleBoard.Answers.Across[game.CurrentClueNumber],
-			ExpiresAt:   game.CurrentClueExpiresAt,
-			Guesses:     clueGuesses[currentClueID],
-		},
+		ID:             game.ID,
+		Grid:           grid,
+		GridNums:       sampleBoard.Gridnums,
+		GridRows:       sampleBoard.Size.Rows,
+		GridCols:       sampleBoard.Size.Cols,
+		CurrentClue:    sampleBoard.GetClue(game.CurrentClueNumber, game.CurrentClueDirection, &game.CurrentClueExpiresAt),
+		LastClue:       sampleBoard.GetLastClue(game.CurrentClueNumber, game.CurrentClueDirection),
 		CurrentPlayers: []Player{},
 	}
+	lastClueID := fmt.Sprintf("%d-%s", g.LastClue.Number, g.LastClue.Direction)
+	g.LastClue.Guesses = clueGuesses[lastClueID]
+
 	for _, player := range players {
 		g.CurrentPlayers = append(g.CurrentPlayers, Player{
 			Name:         player.PlayerName,
@@ -128,6 +123,8 @@ func FetchGame(state *State, gameID string) (*Game, error) {
 			Guesses:      playerGuesses[player.PlayerName],
 		})
 	}
+
+	currentClueID := fmt.Sprintf("%d-%s", g.CurrentClue.Number, g.CurrentClue.Direction)
 	g.CurrentClue.WaitingOnPlayers = WaitingOnPlayers(g.CurrentPlayers, clueGuesses[currentClueID])
 
 	return &g, nil
@@ -242,8 +239,8 @@ func PostGuess(state *State) http.HandlerFunc {
 }
 
 func IncrementClue(state *State, game *Game) error {
-	number := game.CurrentClue.Number + 1
-	return state.UpdateGameClue(game.ID, number, game.CurrentClue.Direction)
+	number, direction := sampleBoard.Next(game.CurrentClue.Number, game.CurrentClue.Direction)
+	return state.UpdateGameClue(game.ID, number, direction)
 }
 
 // GetGame gets current game state
