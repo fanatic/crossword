@@ -85,7 +85,7 @@ func FetchGame(state *State, gameID string) (*Game, error) {
 			Guess:       guess.Guess,
 			SubmittedAt: guess.UpdatedAt,
 		}
-		g.Score = CalculateScore(board, g)
+		g.Score = board.CalculateScore(g)
 		clueID := fmt.Sprintf("%d-%s", guess.ClueNumber(), guess.ClueDirection())
 		clueGuesses[clueID] = append(clueGuesses[clueID], g)
 		playerGuesses[guess.PlayerName()] = append(playerGuesses[guess.PlayerName()], g)
@@ -98,7 +98,7 @@ func FetchGame(state *State, gameID string) (*Game, error) {
 		for _, guess := range guesses {
 			// If guess is correct, fill in grid with answer
 			answer := strings.ToUpper(guess.Guess)
-			correctAnswer := CorrectAnswer(board, n, d)
+			correctAnswer := board.CorrectAnswer(n, d)
 			if correctAnswer == answer {
 				clueLabel := board.ClueLabel(n, d)
 				row, col := board.ClueLabelPosition(clueLabel)
@@ -118,8 +118,6 @@ func FetchGame(state *State, gameID string) (*Game, error) {
 		LastClue:       board.GetLastClue(game.CurrentClueNumber, game.CurrentClueDirection),
 		CurrentPlayers: []Player{},
 	}
-	g.BoardLayout.Grid = grid
-	g.BoardLayout.Answers = nil
 
 	lastClueID := fmt.Sprintf("%d-%s", g.LastClue.Number, g.LastClue.Direction)
 	g.LastClue.Guesses = clueGuesses[lastClueID]
@@ -132,51 +130,18 @@ func FetchGame(state *State, gameID string) (*Game, error) {
 			Guesses:      playerGuesses[player.PlayerName],
 		}
 		for _, guess := range p.Guesses {
-			p.CurrentScore += CalculateScore(board, guess)
+			p.CurrentScore += board.CalculateScore(guess)
 		}
 		g.CurrentPlayers = append(g.CurrentPlayers, p)
 	}
 
 	currentClueID := fmt.Sprintf("%d-%s", g.CurrentClue.Number, g.CurrentClue.Direction)
 	g.CurrentClue.WaitingOnPlayers = WaitingOnPlayers(g.CurrentPlayers, clueGuesses[currentClueID])
-	g.CurrentClue.Answer = MaskAnswer(board, g.CurrentClue.Answer, g.CurrentClue.Number, g.CurrentClue.Direction, grid)
+	g.CurrentClue.Answer = board.MaskAnswer(g.CurrentClue.Answer, g.CurrentClue.Number, g.CurrentClue.Direction, grid)
 
+	g.BoardLayout.Grid = grid
+	g.BoardLayout.Answers = nil
 	return &g, nil
-}
-
-func CorrectAnswer(board *BoardLayout, clueNumber int, clueDirection string) string {
-	if clueDirection == "across" {
-		return board.Answers.Across[clueNumber]
-	}
-	return board.Answers.Down[clueNumber]
-}
-
-func CalculateScore(board *BoardLayout, guess Guess) int {
-	if strings.ToUpper(guess.Guess) != CorrectAnswer(board, guess.Clue.Number, guess.Clue.Direction) {
-		return 0
-	}
-
-	return 100
-}
-
-func MaskAnswer(board *BoardLayout, answer string, currentClueNumber int, currentClueDirection string, grid []string) string {
-	clueLabel := board.ClueLabel(currentClueNumber, currentClueDirection)
-	row, col := board.ClueLabelPosition(clueLabel)
-	numRows, numCols := board.Size.Rows, board.Size.Cols
-
-	a := ""
-	for i := range answer {
-		idx := row*numRows + (col+i)%numCols
-		if currentClueDirection == "down" {
-			idx = (row+i)*numRows + col%numCols
-		}
-		if grid[idx] == " " {
-			a += "?"
-		} else {
-			a += grid[idx]
-		}
-	}
-	return a
 }
 
 func InitializeGrid(numRows, numCols int, grid []string, gridNums []int) []string {

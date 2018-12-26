@@ -116,3 +116,38 @@ func (b BoardLayout) Prev(number int, direction string) (int, string) {
 	}
 	return number - 1, direction
 }
+
+func (b *BoardLayout) CorrectAnswer(clueNumber int, clueDirection string) string {
+	if clueDirection == "across" {
+		return b.Answers.Across[clueNumber]
+	}
+	return b.Answers.Down[clueNumber]
+}
+
+func (b *BoardLayout) CalculateScore(guess Guess) int {
+	if strings.ToUpper(guess.Guess) != b.CorrectAnswer(guess.Clue.Number, guess.Clue.Direction) {
+		return 0
+	}
+
+	return 100
+}
+
+func (b *BoardLayout) MaskAnswer(answer string, currentClueNumber int, currentClueDirection string, grid []string) string {
+	clueLabel := b.ClueLabel(currentClueNumber, currentClueDirection)
+	row, col := b.ClueLabelPosition(clueLabel)
+	numRows, numCols := b.Size.Rows, b.Size.Cols
+
+	a := ""
+	for i := range answer {
+		idx := row*numRows + (col+i)%numCols
+		if currentClueDirection == "down" {
+			idx = (row+i)*numRows + col%numCols
+		}
+		if grid[idx] == " " {
+			a += "?"
+		} else {
+			a += grid[idx]
+		}
+	}
+	return a
+}

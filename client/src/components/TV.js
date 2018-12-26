@@ -14,6 +14,10 @@ export default class TV extends Component {
     return (
       <div>
         <h2>TV Play</h2>
+        <h3>{game.layout.title}</h3>
+        <h4>
+          {game.layout.author}, Author - {game.layout.editor}, Editor
+        </h4>
         <div className="tv-layout">
           <div className="tv-left">
             {game.current_players && (
