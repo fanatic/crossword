@@ -98,6 +98,12 @@ func FetchGame(state *State, gameID string) (*Game, error) {
 	for clueID, guesses := range clueGuesses {
 		n, _ := strconv.Atoi(strings.Split(clueID, "-")[0])
 		d := strings.Split(clueID, "-")[1]
+
+		// Skip evaluating this clue if it's the current one
+		if game.CurrentClueNumber == n && game.CurrentClueDirection == d {
+			continue
+		}
+
 		for _, guess := range guesses {
 			// If guess is correct, fill in grid with answer
 			answer := strings.ToUpper(guess.Guess)

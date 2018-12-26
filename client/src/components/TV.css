@@ -5,8 +5,8 @@
 
 .tv-left {
   flex: 1;
-  display: flex; 
-  flex-direction:column;
+  display: flex;
+  flex-direction: column;
   justify-content: space-around;
 }
 
@@ -16,16 +16,18 @@
 }
 
 .scoreboard {
-  display: flex;
-  justify-content: center;
-  margin: auto;
   list-style-type: none;
   font-size: 20px;
 }
-  
+
+.scoreboard-small {
+  list-style-type: none;
+  font-size: 16px;
+}
+
 .last-clue-header {
-   font-weight: bold;
-   font-size: 20px;
+  font-weight: bold;
+  font-size: 20px;
 }
 
 .last-clue {
@@ -34,7 +36,7 @@
 
 .tiny-header {
   display: flex;
-  margin: auto; 
+  margin: auto;
   list-style-type: none;
   font-size: 16px;
   justify-content: center;
@@ -47,8 +49,8 @@
 
 .countdown {
   text-align: left;
-  border: 1px black solid; 
-  padding: 10px; 
+  border: 1px black solid;
+  padding: 10px;
   width: auto;
   margin: auto;
 }

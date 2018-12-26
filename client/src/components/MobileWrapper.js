@@ -2,9 +2,8 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Home from './Home';
 import Mobile from './Mobile';
-import TV from './TV';
 
-export default class Debug extends Component {
+export default class MobileWrapper extends Component {
   static propTypes = {
     game: PropTypes.object,
     setGameID: PropTypes.func.isRequired
@@ -16,14 +15,7 @@ export default class Debug extends Component {
     return (
       <div className="App">
         {!game && <Home setGameID={setGameID} player_name={player_name} game={game} />}
-        <hr />
-        {game && (
-          <React.Fragment>
-            <Mobile setGameID={setGameID} player_name={player_name} game={game} />
-            <hr />
-            <TV game={game} />
-          </React.Fragment>
-        )}
+        {game && <Mobile setGameID={setGameID} player_name={player_name} game={game} />}
       </div>
     );
   }

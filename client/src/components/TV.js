@@ -11,13 +11,14 @@ export default class TV extends Component {
   render() {
     const { game } = this.props;
 
+    if (!game) return <div />;
+
     const expires = new Date(game.current_clue.expires_at);
     const now = new Date();
     const seconds_left = Math.round((+expires - +now) / 1000);
 
     return (
-      <div>
-        <h2>TV Play</h2>
+      <div className="App">
         <div className="tv-layout">
           <div className="tv-left">
             {game.current_players && (
@@ -38,7 +39,7 @@ export default class TV extends Component {
                   Last Clue: <br />
                 </span>
                 <span className="last-clue">{game.last_clue.description}</span>
-                <ul className="tiny-header">
+                <ul className="scoreboard-small">
                   {(game.last_clue.guesses || []).map(g => (
                     <li key={g.player.name}>
                       {g.player.name}: {g.guess} ({g.score} pts)
@@ -54,10 +55,7 @@ export default class TV extends Component {
               <br />
               {game.layout.author}, Author - {game.layout.editor}, Editor
             </span>
-            <p className="game-id">
-              {/* <button is="google-cast-button" /> */}
-              Game ID: {game.id}
-            </p>
+            <p className="game-id">Game ID: {game.id}</p>
           </div>
           <div className="board-layout">
             <Board game={game} />

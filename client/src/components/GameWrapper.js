@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect, PromiseState } from 'react-refetch';
 import PropTypes from 'prop-types';
-import Debug from './Debug';
+import MobileWrapper from './MobileWrapper';
 
 export default class GameState extends Component {
   constructor(props) {
@@ -21,7 +21,7 @@ export default class GameState extends Component {
   render() {
     return (
       <ConnectedGameWrapper game_id={this.state.game_id} player_name={this.state.player_name}>
-        <Debug setGameID={this.setGameID} />
+        <MobileWrapper setGameID={this.setGameID} />
       </ConnectedGameWrapper>
     );
   }
@@ -46,7 +46,7 @@ class GameWrapper extends Component {
   }
 }
 
-const ConnectedGameWrapper = connect(props => ({
+export const ConnectedGameWrapper = connect(props => ({
   getGame: {
     url: `http://192.168.3.38:8080/games/${props.game_id}`,
     refreshInterval: 1000

@@ -58,8 +58,8 @@ class Board extends Component {
     }
 
     const crosswordBoardStyle = {
-      width: 50 * game.layout.size.cols + 'px',
-      height: 50 * game.layout.size.rows + 'px',
+      width: 46 * game.layout.size.cols + 'px',
+      height: 46 * game.layout.size.rows + 'px',
       gridTemplateRows: 'repeat(' + game.layout.size.rows + ', ' + 100 / game.layout.size.rows + '%)',
       gridTemplateColumns: 'repeat(' + game.layout.size.cols + ', ' + 100 / game.layout.size.cols + '%)'
     };

@@ -1,3 +1,5 @@
+/* global startCast */
+
 import React, { Component } from 'react';
 import { connect, PromiseState } from 'react-refetch';
 import PropTypes from 'prop-types';
@@ -38,6 +40,10 @@ class Mobile extends Component {
     this.props.setGameID('', '');
   };
 
+  startCastSession = () => {
+    startCast(this.props.game.id);
+  };
+
   render() {
     const { player_name, game } = this.props;
 
@@ -45,6 +51,9 @@ class Mobile extends Component {
       <div>
         <h2>
           Mobile Play ({player_name} - {game.id})<button onClick={this.handleLeaveGame}>Leave Game</button>
+          <button id="requestSession" onClick={this.startCastSession}>
+            Start cast session
+          </button>
         </h2>
         {game.current_clue && (
           <React.Fragment>
