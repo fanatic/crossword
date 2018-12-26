@@ -17,7 +17,7 @@ export default class TV extends Component {
         <div className="tv-layout">
           <div className="tv-left">
             {game.current_players && (
-              <p>
+              <div>
                 <span className="score-header">Score</span>
                 <ul className="scoreboard">
                   {game.current_players.map(p => (
@@ -26,10 +26,10 @@ export default class TV extends Component {
                     </li>
                   ))}
                 </ul>
-              </p>
+              </div>
             )}
             {game.last_clue && (
-              <p>
+              <div>
                 <span className="last-clue-header">
                   Last Clue: <br />
                 </span>
@@ -41,7 +41,7 @@ export default class TV extends Component {
                     </li>
                   ))}
                 </ul>
-              </p>
+              </div>
             )}
             {game.current_clue && <p className="current-clue">{game.current_clue.description}</p>}
             {/* <span className="countdown"> :30 </span> */}
