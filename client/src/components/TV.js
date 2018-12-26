@@ -14,10 +14,10 @@ export default class TV extends Component {
     return (
       <div>
         <h2>TV Play</h2>
-        <h3>{game.layout.title}</h3>
-        <h4>
-          {game.layout.author}, Author - {game.layout.editor}, Editor
-        </h4>
+  #      <h3>{game.layout.title}</h3>
+   #     <h4>
+   #       {game.layout.author}, Author - {game.layout.editor}, Editor
+   #     </h4>
         <div className="tv-layout">
           <div className="tv-left">
             {game.current_players && (
@@ -49,7 +49,11 @@ export default class TV extends Component {
             )}
             {game.current_clue && <p className="current-clue">{game.current_clue.description}</p>}
             {/* <span className="countdown"> :30 </span> */}
-            <p className="game-id">
+           <span className="last-clue-score">
+             {game.layout.title}
+             {game.layout.author}, Author - {game.layout.editor}, Editor
+             </span>
+             <p className="game-id">
               {/* <button is="google-cast-button" /> */}
               Game ID: {game.id}
             </p>
