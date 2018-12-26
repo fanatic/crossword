@@ -76,7 +76,7 @@
         session = newSession;
         session.addUpdateListener(sessionUpdateListener);
         session.addMessageListener(namespace, receiveMessage);
-        sendMessage({ type: 'iframe', url: 'http://192.168.3.38:3000/tv/' + gID });
+        sendMessage({ type: 'iframe', url: 'http://crossword.jasonparrott.com/tv/' + gID });
       }
       function receiverListener(e) {
         e === 'available' ? console.log('receiver found') : console.log('no receivers found');

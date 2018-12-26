@@ -12,3 +12,6 @@
 *.out
 
 dynamodb_local
+handler.zip
+lambda_handler
+!lambda_handler/

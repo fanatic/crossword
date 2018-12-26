@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/guregu/dynamo"
 )
@@ -161,11 +160,11 @@ func (state *State) GetGuesses(gameID string) ([]GuessState, error) {
 }
 
 func NewState() *State {
-	creds := credentials.NewStaticCredentials("123", "123", "")
+	//creds := credentials.NewStaticCredentials("123", "123", "")
 	db := dynamo.New(session.New(), &aws.Config{
-		Credentials: creds,
-		Region:      aws.String("us-east-2"),
-		Endpoint:    aws.String("http://localhost:8000"),
+		//Credentials: creds,
+		Region: aws.String("us-east-2"),
+		//Endpoint:    aws.String("http://localhost:8000"),
 	})
 	err := db.CreateTable("GameStates", GameState{}).Run()
 	if err != nil {

@@ -85,7 +85,7 @@ class Mobile extends Component {
 export default connect(props => ({
   postGuess: (game_id, body) => ({
     postGuessResponse: {
-      url: `http://192.168.3.38:8080/games/${game_id}/guesses`,
+      url: `https://crossword-api.jasonparrott.com/games/${game_id}/guesses`,
       method: 'POST',
       body: JSON.stringify(body),
       force: true,

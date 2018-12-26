@@ -48,7 +48,7 @@ class GameWrapper extends Component {
 
 export const ConnectedGameWrapper = connect(props => ({
   getGame: {
-    url: `http://192.168.3.38:8080/games/${props.game_id}`,
+    url: `https://crossword-api.jasonparrott.com/games/${props.game_id}`,
     refreshInterval: 1000
   }
 }))(GameWrapper);

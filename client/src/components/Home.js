@@ -34,8 +34,12 @@ class Home extends Component {
 
   handleInputChange = event => {
     const target = event.target;
-    const value = target.type === 'checkbox' ? target.checked : target.value;
+    let value = target.type === 'checkbox' ? target.checked : target.value;
     const name = target.name;
+
+    if (name === 'game_id') {
+      value = value.toUpperCase();
+    }
 
     this.setState({
       [name]: value
@@ -127,7 +131,7 @@ class Home extends Component {
 export default connect(props => ({
   postPlayer: (game_id, body, callback) => ({
     postPlayerResponse: {
-      url: `http://192.168.3.38:8080/games/${game_id}/players`,
+      url: `https://crossword-api.jasonparrott.com/games/${game_id}/players`,
       method: 'POST',
       body: JSON.stringify(body),
       andThen: callback
@@ -135,18 +139,18 @@ export default connect(props => ({
   }),
   postGame: (body, callback) => ({
     postGameResponse: {
-      url: `http://192.168.3.38:8080/games`,
+      url: `https://crossword-api.jasonparrott.com/games`,
       method: 'POST',
       body: JSON.stringify(body),
       andThen: callback
     }
   }),
   fetchLayouts: {
-    url: `http://192.168.3.38:8080/layouts`
+    url: `https://crossword-api.jasonparrott.com/layouts`
   },
   postLayout: (body, callback) => ({
     fetchLayouts: {
-      url: `http://192.168.3.38:8080/layouts`,
+      url: `https://crossword-api.jasonparrott.com/layouts`,
       method: 'POST',
       body: JSON.stringify(body),
       andThen: callback

@@ -195,8 +195,39 @@ func FillInGridAnswerDown(startRow, startCol, numRows, numCols int, answer strin
 }
 
 func IncrementClue(state *State, game *Game) error {
+	board, err := state.GetBoardLayout(game.BoardLayout.ID)
+	if err != nil {
+		return err
+	}
+
 	number, direction := game.BoardLayout.Next(game.CurrentClue.Number, game.CurrentClue.Direction)
+	for i := 0; i <= len(board.Answers.Across)-1+len(board.Answers.Down)-1; i++ {
+		// Skip over answered clues
+		if !ClueAnswered(state, game, board, number, direction) {
+			break
+		}
+		number, direction = game.BoardLayout.Next(number, direction)
+	}
+
 	return state.UpdateGameClue(game.ID, number, direction)
+}
+
+func ClueAnswered(state *State, game *Game, board *BoardLayout, clueNumber int, clueDirection string) bool {
+	guesses, err := state.GetGuesses(game.ID)
+	if err != nil {
+		return false
+	}
+
+	for _, guess := range guesses {
+		if clueNumber != guess.ClueNumber() || clueDirection != guess.ClueDirection() {
+			continue
+		}
+		if strings.ToUpper(guess.Guess) != board.CorrectAnswer(clueNumber, clueDirection) {
+			continue
+		}
+		return true
+	}
+	return false
 }
 
 func CheckTimers(state *State, game *Game) error {
