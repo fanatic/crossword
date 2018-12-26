@@ -18,10 +18,6 @@ export default class TV extends Component {
     return (
       <div>
         <h2>TV Play</h2>
-        <h3>{game.layout.title}</h3>
-        <h4>
-          {game.layout.author}, Author - {game.layout.editor}, Editor
-        </h4>
         <div className="tv-layout">
           <div className="tv-left">
             {game.current_players && (
@@ -42,7 +38,7 @@ export default class TV extends Component {
                   Last Clue: <br />
                 </span>
                 <span className="last-clue">{game.last_clue.description}</span>
-                <ul className="last-clue-score">
+                <ul className="tiny-header">
                   {(game.last_clue.guesses || []).map(g => (
                     <li key={g.player.name}>
                       {g.player.name}: {g.guess} ({g.score} pts)
@@ -53,6 +49,11 @@ export default class TV extends Component {
             )}
             {game.current_clue && <p className="current-clue">{game.current_clue.description}</p>}
             <span className="countdown"> {seconds_left}s </span>
+            <span className="tiny-header">
+              {game.layout.title}
+              <br />
+              {game.layout.author}, Author - {game.layout.editor}, Editor
+            </span>
             <p className="game-id">
               {/* <button is="google-cast-button" /> */}
               Game ID: {game.id}
