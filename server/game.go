@@ -213,21 +213,10 @@ func IncrementClue(state *State, game *Game) error {
 }
 
 func ClueAnswered(state *State, game *Game, board *BoardLayout, clueNumber int, clueDirection string) bool {
-	guesses, err := state.GetGuesses(game.ID)
-	if err != nil {
-		return false
-	}
+	correctAnswer := board.CorrectAnswer(clueNumber, clueDirection)
+	gridAnswer := board.MaskAnswer(correctAnswer, clueNumber, clueDirection, game.BoardLayout.Grid)
 
-	for _, guess := range guesses {
-		if clueNumber != guess.ClueNumber() || clueDirection != guess.ClueDirection() {
-			continue
-		}
-		if strings.ToUpper(guess.Guess) != board.CorrectAnswer(clueNumber, clueDirection) {
-			continue
-		}
-		return true
-	}
-	return false
+	return correctAnswer == gridAnswer
 }
 
 func CheckTimers(state *State, game *Game) error {

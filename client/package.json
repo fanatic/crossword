@@ -15,7 +15,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "deploy": "npm run build && aws s3 sync build/ s3://crossword.jasonparrott.com"
+    "deploy": "npm run build && aws s3 sync build/ s3://crossword.jasonparrott.com",
+    "invalidate": "aws cloudfront create-invalidation --distribution-id E3DE71Z42PGEXU --paths '/*'"
   },
   "eslintConfig": {
     "extends": "react-app"
