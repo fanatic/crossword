@@ -112,6 +112,13 @@ class Home extends Component {
           />
           <input type="submit" value="Upload Board" />
         </form>
+        <p>
+          <a href="https://github.com/doshea/nyt_crosswords" target="_blank" rel="noopener noreferrer">
+            NYT Crossword Archive
+          </a>
+          <br />
+          NYT Current Crosswords: https://www.xwordinfo.com/JSON/Data.aspx?date=9/12/2008&amp;format=text
+        </p>
       </div>
     );
   }

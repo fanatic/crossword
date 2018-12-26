@@ -9,11 +9,7 @@ import (
 
 type Game struct {
 	ID             string       `json:"id"`
-	BoardLayout    *BoardLayout `json:"-"`
-	Grid           []string     `json:"grid"`
-	GridNums       []int        `json:"grid_nums"`
-	GridRows       int          `json:"grid_rows"`
-	GridCols       int          `json:"grid_cols"`
+	BoardLayout    *BoardLayout `json:"layout"`
 	LastClue       Clue         `json:"last_clue"`
 	CurrentClue    Clue         `json:"current_clue"`
 	CurrentPlayers []Player     `json:"current_players"`
@@ -118,14 +114,13 @@ func FetchGame(state *State, gameID string) (*Game, error) {
 	g := Game{
 		ID:             game.ID,
 		BoardLayout:    board,
-		Grid:           grid,
-		GridNums:       board.Gridnums,
-		GridRows:       board.Size.Rows,
-		GridCols:       board.Size.Cols,
 		CurrentClue:    board.GetClue(game.CurrentClueNumber, game.CurrentClueDirection, &game.CurrentClueExpiresAt),
 		LastClue:       board.GetLastClue(game.CurrentClueNumber, game.CurrentClueDirection),
 		CurrentPlayers: []Player{},
 	}
+	g.BoardLayout.Grid = grid
+	g.BoardLayout.Answers = nil
+
 	lastClueID := fmt.Sprintf("%d-%s", g.LastClue.Number, g.LastClue.Direction)
 	g.LastClue.Guesses = clueGuesses[lastClueID]
 	g.LastClue.Answer = ""

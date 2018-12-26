@@ -6,7 +6,7 @@ import TV from './TV';
 
 export default class Debug extends Component {
   static propTypes = {
-    game: PropTypes.object.isRequired,
+    game: PropTypes.object,
     setGameID: PropTypes.func.isRequired
   };
 

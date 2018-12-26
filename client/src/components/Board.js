@@ -27,18 +27,18 @@ class Board extends Component {
     const { game } = this.props;
 
     let items = [];
-    for (let row = 0; row < game.grid_rows; row++) {
-      for (let col = 0; col < game.grid_cols; col++) {
-        const idx = row * game.grid_rows + (col % game.grid_cols);
-        items.push(<Item key={idx} row={row + 1} col={col + 1} val={game.grid[idx]} />);
+    for (let row = 0; row < game.layout.size.rows; row++) {
+      for (let col = 0; col < game.layout.size.cols; col++) {
+        const idx = row * game.layout.size.rows + (col % game.layout.size.cols);
+        items.push(<Item key={idx} row={row + 1} col={col + 1} val={game.layout.grid[idx]} />);
       }
     }
 
     let labels = [];
-    for (let row = 0; row < game.grid_rows; row++) {
-      for (let col = 0; col < game.grid_cols; col++) {
-        const idx = row * game.grid_rows + (col % game.grid_cols);
-        const label = game.grid_nums[idx];
+    for (let row = 0; row < game.layout.size.rows; row++) {
+      for (let col = 0; col < game.layout.size.cols; col++) {
+        const idx = row * game.layout.size.rows + (col % game.layout.size.cols);
+        const label = game.layout.gridnums[idx];
         if (label === 0) continue;
         labels.push(
           <span
@@ -58,10 +58,10 @@ class Board extends Component {
     }
 
     const crosswordBoardStyle = {
-      width: 50 * game.grid_cols + 'px',
-      height: 50 * game.grid_rows + 'px',
-      gridTemplateRows: 'repeat(' + game.grid_rows + ', ' + 100 / game.grid_rows + '%)',
-      gridTemplateColumns: 'repeat(' + game.grid_cols + ', ' + 100 / game.grid_cols + '%)'
+      width: 50 * game.layout.size.cols + 'px',
+      height: 50 * game.layout.size.rows + 'px',
+      gridTemplateRows: 'repeat(' + game.layout.size.rows + ', ' + 100 / game.layout.size.rows + '%)',
+      gridTemplateColumns: 'repeat(' + game.layout.size.cols + ', ' + 100 / game.layout.size.cols + '%)'
     };
 
     let highlight_style = { opacity: 0 };
@@ -70,10 +70,10 @@ class Board extends Component {
       const current_clue_direction = game.current_clue.direction;
       let current_clue_row = 1;
       let current_clue_col = 1;
-      for (let row = 0; row < game.grid_rows; row++) {
-        for (let col = 0; col < game.grid_cols; col++) {
-          const idx = row * game.grid_rows + (col % game.grid_cols);
-          if (game.grid_nums[idx] === parseInt(current_clue_label)) {
+      for (let row = 0; row < game.layout.size.rows; row++) {
+        for (let col = 0; col < game.layout.size.cols; col++) {
+          const idx = row * game.layout.size.rows + (col % game.layout.size.cols);
+          if (game.layout.gridnums[idx] === parseInt(current_clue_label)) {
             current_clue_row = row + 1;
             current_clue_col = col + 1;
           }
