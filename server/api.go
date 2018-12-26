@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/handlers"
@@ -131,7 +132,7 @@ func PostGuess(state *State) http.HandlerFunc {
 		}
 
 		// If this player was the last one we were waiting on, continue
-		if len(game.CurrentClue.WaitingOnPlayers) == 1 && game.CurrentClue.WaitingOnPlayers[0] == guessRequest.PlayerName {
+		if len(game.CurrentClue.WaitingOnPlayers) == 0 || (len(game.CurrentClue.WaitingOnPlayers) == 1 && game.CurrentClue.WaitingOnPlayers[0] == guessRequest.PlayerName) {
 			err := IncrementClue(state, game)
 			if err != nil {
 				w.WriteHeader(500)
@@ -160,6 +161,10 @@ func GetGame(state *State) http.HandlerFunc {
 			w.WriteHeader(500)
 			fmt.Fprintf(w, "Error fetching game state: %s", err)
 			return
+		}
+
+		if err := CheckTimers(state, game); err != nil {
+			log.Println("Timer error:", err)
 		}
 
 		json.NewEncoder(w).Encode(game)

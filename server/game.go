@@ -19,6 +19,7 @@ type Player struct {
 	Name         string  `json:"name"`
 	CurrentScore int     `json:"current_score"`
 	Guesses      []Guess `json:"-"`
+	Active       bool    `json:"active"`
 }
 
 type Guess struct {
@@ -42,7 +43,9 @@ type Clue struct {
 func WaitingOnPlayers(currentPlayers []Player, guesses []Guess) []string {
 	players := map[string]bool{}
 	for _, p := range currentPlayers {
-		players[p.Name] = true
+		if p.Active {
+			players[p.Name] = true
+		}
 	}
 	for _, g := range guesses {
 		delete(players, g.Player.Name)
@@ -128,9 +131,15 @@ func FetchGame(state *State, gameID string) (*Game, error) {
 			Name:         player.PlayerName,
 			CurrentScore: 0,
 			Guesses:      playerGuesses[player.PlayerName],
+			Active:       false,
 		}
 		for _, guess := range p.Guesses {
 			p.CurrentScore += board.CalculateScore(guess)
+		}
+		for _, guess := range g.LastClue.Guesses {
+			if guess.Player.Name == player.PlayerName {
+				p.Active = true
+			}
 		}
 		g.CurrentPlayers = append(g.CurrentPlayers, p)
 	}
@@ -182,4 +191,12 @@ func FillInGridAnswerDown(startRow, startCol, numRows, numCols int, answer strin
 func IncrementClue(state *State, game *Game) error {
 	number, direction := game.BoardLayout.Next(game.CurrentClue.Number, game.CurrentClue.Direction)
 	return state.UpdateGameClue(game.ID, number, direction)
+}
+
+func CheckTimers(state *State, game *Game) error {
+	if time.Since(*game.CurrentClue.ExpiresAt) < 0 {
+		return nil
+	}
+
+	return IncrementClue(state, game)
 }

@@ -62,7 +62,10 @@ class Mobile extends Component {
               <input type="submit" value="Guess" />
             </form>
             <br />
-            <small>Waiting on {(game.current_clue.waiting_on_players || []).join(', ')}.</small>
+            <small>
+              Waiting for{' '}
+              {game.current_clue.waiting_on_players ? game.current_clue.waiting_on_players.join(', ') : 'your answer'}.
+            </small>
           </React.Fragment>
         )}
       </div>
