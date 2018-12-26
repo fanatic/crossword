@@ -1,6 +1,7 @@
 package server
 
 import (
+	"html"
 	"strconv"
 	"strings"
 	"time"
@@ -87,7 +88,7 @@ func (b BoardLayout) GetClue(number int, direction string, expiresAt *time.Time)
 	return Clue{
 		Number:      number,
 		Direction:   direction,
-		Description: clues[number],
+		Description: html.UnescapeString(clues[number]),
 		Answer:      answers[number],
 		ExpiresAt:   expiresAt,
 	}
