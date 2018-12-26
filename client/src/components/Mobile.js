@@ -6,6 +6,7 @@ import BoardFragment from './BoardFragment';
 class Mobile extends Component {
   static propTypes = {
     game: PropTypes.object.isRequired,
+    setGameID: PropTypes.func.isRequired,
     player_name: PropTypes.string.isRequired,
     postGuess: PropTypes.func.isRequired,
     postGuessResponse: PropTypes.instanceOf(PromiseState)
@@ -30,19 +31,20 @@ class Mobile extends Component {
     event.preventDefault();
 
     this.props.postGuess(this.props.game.id, { player_name: this.props.player_name, guess: this.state.guess });
+    this.setState({ guess: '' });
+  };
+
+  handleLeaveGame = event => {
+    this.props.setGameID('', '');
   };
 
   render() {
     const { player_name, game } = this.props;
 
-    const all_players = (game.current_players || []).map(p => p.name);
-    const guessed_players = ((game.current_clue || {}).guesses || []).map(g => g.player.name);
-    const missing_players = all_players - guessed_players || [];
-
     return (
       <div>
         <h2>
-          Mobile Play ({player_name} - {game.id})
+          Mobile Play ({player_name} - {game.id})<button onClick={this.handleLeaveGame}>Leave Game</button>
         </h2>
         {game.current_clue && (
           <React.Fragment>
@@ -60,7 +62,7 @@ class Mobile extends Component {
               <input type="submit" value="Guess" />
             </form>
             <br />
-            <small>Waiting on {missing_players.join(', ')}.</small>
+            <small>Waiting on {(game.current_clue.waiting_on_players || []).join(', ')}.</small>
           </React.Fragment>
         )}
       </div>

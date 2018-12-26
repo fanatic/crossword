@@ -16,7 +16,7 @@ class Home extends Component {
     if (props.game) {
       game_id = props.game.id;
     }
-    this.state = { name: props.player_name, game_id: game_id };
+    this.state = { name: props.player_name, game_id: game_id, board_id: '', board_url: '' };
   }
 
   componentWillReceiveProps(newProps) {
@@ -45,8 +45,11 @@ class Home extends Component {
   handleHost = event => {
     event.preventDefault();
 
-    this.props.postGame(result => {
-      this.props.setGameID(result.id, '');
+    this.props.postGame({ board_id: this.state.board_id }, result => {
+      this.props.postPlayer(result.id, { name: this.state.name }, result => {
+        this.props.setGameID(result.id, this.state.name);
+        return {};
+      });
       return {};
     });
   };
@@ -60,11 +63,32 @@ class Home extends Component {
     });
   };
 
+  handleSubmitBoard = event => {
+    event.preventDefault();
+
+    this.props.postLayout({ url: this.state.board_url }, result => {
+      this.setState({ board_url: '' });
+      return {};
+    });
+  };
+
   render() {
+    const { fetchLayouts } = this.props;
+
     return (
       <div>
         <h2>Home Screen</h2>
         <form onSubmit={this.handleHost}>
+          <input type="text" placeholder="Name" name="name" value={this.state.name} onChange={this.handleInputChange} />
+          <select name="board_id" value={this.state.board_id} onChange={this.handleInputChange}>
+            <option value="" />
+            {fetchLayouts.fulfilled &&
+              fetchLayouts.value.map(l => (
+                <option key={l.id} value={l.id}>
+                  {l.id}
+                </option>
+              ))}
+          </select>
           <input type="submit" value="Host Game" />
         </form>
         <form onSubmit={this.handleJoin}>
@@ -77,6 +101,16 @@ class Home extends Component {
             onChange={this.handleInputChange}
           />
           <input type="submit" value="Join Game" />
+        </form>
+        <form onSubmit={this.handleSubmitBoard}>
+          <input
+            type="text"
+            placeholder="Board URL"
+            name="board_url"
+            value={this.state.board_url}
+            onChange={this.handleInputChange}
+          />
+          <input type="submit" value="Upload Board" />
         </form>
       </div>
     );
@@ -92,10 +126,22 @@ export default connect(props => ({
       andThen: callback
     }
   }),
-  postGame: callback => ({
+  postGame: (body, callback) => ({
     postGameResponse: {
       url: `http://192.168.3.38:8080/games`,
       method: 'POST',
+      body: JSON.stringify(body),
+      andThen: callback
+    }
+  }),
+  fetchLayouts: {
+    url: `http://192.168.3.38:8080/layouts`
+  },
+  postLayout: (body, callback) => ({
+    fetchLayouts: {
+      url: `http://192.168.3.38:8080/layouts`,
+      method: 'POST',
+      body: JSON.stringify(body),
       andThen: callback
     }
   })

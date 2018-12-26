@@ -15,11 +15,15 @@ export default class Debug extends Component {
 
     return (
       <div className="App">
-        <Home setGameID={setGameID} player_name={player_name} game={game} />
+        {!game && <Home setGameID={setGameID} player_name={player_name} game={game} />}
         <hr />
-        <Mobile setGameID={setGameID} player_name={player_name} game={game} />
-        <hr />
-        <TV game={game} />
+        {game && (
+          <React.Fragment>
+            <Mobile setGameID={setGameID} player_name={player_name} game={game} />
+            <hr />
+            <TV game={game} />
+          </React.Fragment>
+        )}
       </div>
     );
   }

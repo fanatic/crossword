@@ -35,7 +35,7 @@ class GameWrapper extends Component {
   render() {
     const { player_name, getGame, children } = this.props;
 
-    let game = {};
+    let game;
     if (getGame.fulfilled) {
       game = getGame.value;
     }

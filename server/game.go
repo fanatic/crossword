@@ -8,20 +8,20 @@ import (
 )
 
 type Game struct {
-	ID             string      `json:"id"`
-	BoardLayout    BoardLayout `json:"-"`
-	Grid           []string    `json:"grid"`
-	GridNums       []int       `json:"grid_nums"`
-	GridRows       int         `json:"grid_rows"`
-	GridCols       int         `json:"grid_cols"`
-	LastClue       Clue        `json:"last_clue"`
-	CurrentClue    Clue        `json:"current_clue"`
-	CurrentPlayers []Player    `json:"current_players"`
+	ID             string       `json:"id"`
+	BoardLayout    *BoardLayout `json:"-"`
+	Grid           []string     `json:"grid"`
+	GridNums       []int        `json:"grid_nums"`
+	GridRows       int          `json:"grid_rows"`
+	GridCols       int          `json:"grid_cols"`
+	LastClue       Clue         `json:"last_clue"`
+	CurrentClue    Clue         `json:"current_clue"`
+	CurrentPlayers []Player     `json:"current_players"`
 }
 
 type Player struct {
 	Name         string  `json:"name"`
-	CurrentScore int     `json:"current_score,omitempty"`
+	CurrentScore int     `json:"current_score"`
 	Guesses      []Guess `json:"-"`
 }
 
@@ -29,6 +29,7 @@ type Guess struct {
 	Player      Player    `json:"player" dynamo:"-"`
 	Clue        Clue      `json:"-" dynamo:"-"`
 	Guess       string    `json:"guess"`
+	Score       int       `json:"score"`
 	SubmittedAt time.Time `json:"submitted_at"`
 }
 
@@ -64,6 +65,11 @@ func FetchGame(state *State, gameID string) (*Game, error) {
 		return nil, err
 	}
 
+	board, err := state.GetBoardLayout(game.BoardID)
+	if err != nil {
+		return nil, err
+	}
+
 	players, err := state.GetPlayers(gameID)
 	if err != nil {
 		return nil, err
@@ -83,25 +89,27 @@ func FetchGame(state *State, gameID string) (*Game, error) {
 			Guess:       guess.Guess,
 			SubmittedAt: guess.UpdatedAt,
 		}
+		g.Score = CalculateScore(board, g)
 		clueID := fmt.Sprintf("%d-%s", guess.ClueNumber(), guess.ClueDirection())
 		clueGuesses[clueID] = append(clueGuesses[clueID], g)
 		playerGuesses[guess.PlayerName()] = append(playerGuesses[guess.PlayerName()], g)
 	}
 
-	grid := InitializeGrid(sampleBoard.Size.Rows, sampleBoard.Size.Cols, sampleBoard.Grid, sampleBoard.Gridnums)
+	grid := InitializeGrid(board.Size.Rows, board.Size.Cols, board.Grid, board.Gridnums)
 	for clueID, guesses := range clueGuesses {
 		n, _ := strconv.Atoi(strings.Split(clueID, "-")[0])
 		d := strings.Split(clueID, "-")[1]
 		for _, guess := range guesses {
 			// If guess is correct, fill in grid with answer
 			answer := strings.ToUpper(guess.Guess)
-			if (d == "across" && answer == sampleBoard.Answers.Across[n]) || (d == "down" && answer == sampleBoard.Answers.Down[n]) {
-				clueLabel := sampleBoard.ClueLabel(n, d)
-				row, col := sampleBoard.ClueLabelPosition(clueLabel)
+			correctAnswer := CorrectAnswer(board, n, d)
+			if correctAnswer == answer {
+				clueLabel := board.ClueLabel(n, d)
+				row, col := board.ClueLabelPosition(clueLabel)
 				if d == "across" {
-					grid = FillInGridAnswerAcross(row, col, sampleBoard.Size.Rows, sampleBoard.Size.Cols, answer, grid)
+					grid = FillInGridAnswerAcross(row, col, board.Size.Rows, board.Size.Cols, answer, grid)
 				} else {
-					grid = FillInGridAnswerDown(row, col, sampleBoard.Size.Rows, sampleBoard.Size.Cols, answer, grid)
+					grid = FillInGridAnswerDown(row, col, board.Size.Rows, board.Size.Cols, answer, grid)
 				}
 			}
 		}
@@ -109,12 +117,13 @@ func FetchGame(state *State, gameID string) (*Game, error) {
 
 	g := Game{
 		ID:             game.ID,
+		BoardLayout:    board,
 		Grid:           grid,
-		GridNums:       sampleBoard.Gridnums,
-		GridRows:       sampleBoard.Size.Rows,
-		GridCols:       sampleBoard.Size.Cols,
-		CurrentClue:    sampleBoard.GetClue(game.CurrentClueNumber, game.CurrentClueDirection, &game.CurrentClueExpiresAt),
-		LastClue:       sampleBoard.GetLastClue(game.CurrentClueNumber, game.CurrentClueDirection),
+		GridNums:       board.Gridnums,
+		GridRows:       board.Size.Rows,
+		GridCols:       board.Size.Cols,
+		CurrentClue:    board.GetClue(game.CurrentClueNumber, game.CurrentClueDirection, &game.CurrentClueExpiresAt),
+		LastClue:       board.GetLastClue(game.CurrentClueNumber, game.CurrentClueDirection),
 		CurrentPlayers: []Player{},
 	}
 	lastClueID := fmt.Sprintf("%d-%s", g.LastClue.Number, g.LastClue.Direction)
@@ -122,24 +131,43 @@ func FetchGame(state *State, gameID string) (*Game, error) {
 	g.LastClue.Answer = ""
 
 	for _, player := range players {
-		g.CurrentPlayers = append(g.CurrentPlayers, Player{
+		p := Player{
 			Name:         player.PlayerName,
 			CurrentScore: 0,
 			Guesses:      playerGuesses[player.PlayerName],
-		})
+		}
+		for _, guess := range p.Guesses {
+			p.CurrentScore += CalculateScore(board, guess)
+		}
+		g.CurrentPlayers = append(g.CurrentPlayers, p)
 	}
 
 	currentClueID := fmt.Sprintf("%d-%s", g.CurrentClue.Number, g.CurrentClue.Direction)
 	g.CurrentClue.WaitingOnPlayers = WaitingOnPlayers(g.CurrentPlayers, clueGuesses[currentClueID])
-	g.CurrentClue.Answer = MaskAnswer(g.CurrentClue.Answer, g.CurrentClue.Number, g.CurrentClue.Direction, grid)
+	g.CurrentClue.Answer = MaskAnswer(board, g.CurrentClue.Answer, g.CurrentClue.Number, g.CurrentClue.Direction, grid)
 
 	return &g, nil
 }
 
-func MaskAnswer(answer string, currentClueNumber int, currentClueDirection string, grid []string) string {
-	clueLabel := sampleBoard.ClueLabel(currentClueNumber, currentClueDirection)
-	row, col := sampleBoard.ClueLabelPosition(clueLabel)
-	numRows, numCols := sampleBoard.Size.Rows, sampleBoard.Size.Cols
+func CorrectAnswer(board *BoardLayout, clueNumber int, clueDirection string) string {
+	if clueDirection == "across" {
+		return board.Answers.Across[clueNumber]
+	}
+	return board.Answers.Down[clueNumber]
+}
+
+func CalculateScore(board *BoardLayout, guess Guess) int {
+	if strings.ToUpper(guess.Guess) != CorrectAnswer(board, guess.Clue.Number, guess.Clue.Direction) {
+		return 0
+	}
+
+	return 100
+}
+
+func MaskAnswer(board *BoardLayout, answer string, currentClueNumber int, currentClueDirection string, grid []string) string {
+	clueLabel := board.ClueLabel(currentClueNumber, currentClueDirection)
+	row, col := board.ClueLabelPosition(clueLabel)
+	numRows, numCols := board.Size.Rows, board.Size.Cols
 
 	a := ""
 	for i := range answer {
@@ -192,6 +220,6 @@ func FillInGridAnswerDown(startRow, startCol, numRows, numCols int, answer strin
 }
 
 func IncrementClue(state *State, game *Game) error {
-	number, direction := sampleBoard.Next(game.CurrentClue.Number, game.CurrentClue.Direction)
+	number, direction := game.BoardLayout.Next(game.CurrentClue.Number, game.CurrentClue.Direction)
 	return state.UpdateGameClue(game.ID, number, direction)
 }

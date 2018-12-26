@@ -17,13 +17,24 @@ func NewRouter() http.Handler {
 	router.HandleFunc("/games/{id}", GetGame(state)).Methods("GET")
 	router.HandleFunc("/games/{id}/players", PostPlayer(state)).Methods("POST")
 	router.HandleFunc("/games/{id}/guesses", PostGuess(state)).Methods("POST")
+	router.HandleFunc("/layouts", GetLayouts(state)).Methods("GET")
+	router.HandleFunc("/layouts", PostLayout(state)).Methods("POST")
 	return handlers.CORS(handlers.AllowedHeaders([]string{"Accept", "Accept-Language", "Content-Language", "Origin", "Content-Type"}))(router)
 }
 
 // PostGame creates a new game state
 func PostGame(state *State) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id, err := state.CreateGame()
+		var gameRequest struct {
+			BoardID string `json:"board_id"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&gameRequest); err != nil {
+			w.WriteHeader(500)
+			fmt.Fprintf(w, "Error parsing body: %s", err)
+			return
+		}
+
+		id, err := state.CreateGame(gameRequest.BoardID)
 		if err != nil {
 			w.WriteHeader(500)
 			fmt.Fprintf(w, "Error creating game: %s", err)
@@ -100,6 +111,18 @@ func PostGuess(state *State) http.HandlerFunc {
 			return
 		}
 
+		playerExists := false
+		for _, player := range game.CurrentPlayers {
+			if player.Name == guessRequest.PlayerName {
+				playerExists = true
+			}
+		}
+		if !playerExists {
+			w.WriteHeader(400)
+			fmt.Fprintf(w, "Player does not exist: %s", guessRequest.PlayerName)
+			return
+		}
+
 		err = state.CreateGuess(game.ID, guessRequest.PlayerName, game.CurrentClue.Number, game.CurrentClue.Direction, guessRequest.Guess)
 		if err != nil {
 			w.WriteHeader(500)
@@ -107,6 +130,7 @@ func PostGuess(state *State) http.HandlerFunc {
 			return
 		}
 
+		// If this player was the last one we were waiting on, continue
 		if len(game.CurrentClue.WaitingOnPlayers) == 1 && game.CurrentClue.WaitingOnPlayers[0] == guessRequest.PlayerName {
 			err := IncrementClue(state, game)
 			if err != nil {
@@ -139,5 +163,70 @@ func GetGame(state *State) http.HandlerFunc {
 		}
 
 		json.NewEncoder(w).Encode(game)
+	}
+}
+
+// GetLayouts uploads a board
+func GetLayouts(state *State) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		boardLayouts, err := state.GetBoardLayouts()
+		if err != nil {
+			w.WriteHeader(500)
+			fmt.Fprintf(w, "Error fetching layout: %s", err)
+			return
+		}
+
+		json.NewEncoder(w).Encode(boardLayouts)
+	}
+}
+
+// PostLayout uploads a board
+func PostLayout(state *State) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var layoutRequest struct {
+			URL string `json:"url"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&layoutRequest); err != nil {
+			w.WriteHeader(500)
+			fmt.Fprintf(w, "Error parsing body: %s", err)
+			return
+		}
+
+		rreq, err := http.NewRequest("GET", layoutRequest.URL, nil)
+		if err != nil {
+			w.WriteHeader(500)
+			fmt.Fprintf(w, "Error fetching layout: %s", err)
+			return
+		}
+		rreq.Header.Add("Referer", "https://www.xwordinfo.com/JSON/Sample1")
+		req, err := http.DefaultClient.Do(rreq)
+		if err != nil {
+			w.WriteHeader(500)
+			fmt.Fprintf(w, "Error fetching layout: %s", err)
+			return
+		}
+		defer req.Body.Close()
+
+		var boardLayout BoardLayout
+		json.NewDecoder(req.Body).Decode(&boardLayout)
+
+		boardLayout.ID = fmt.Sprintf("%s-%s", boardLayout.Publisher, boardLayout.Date)
+
+		err = state.CreateBoardLayout(boardLayout)
+		if err != nil {
+			w.WriteHeader(500)
+			fmt.Fprintf(w, "Error creating layout: %s", err)
+			return
+		}
+
+		boardLayouts, err := state.GetBoardLayouts()
+		if err != nil {
+			w.WriteHeader(500)
+			fmt.Fprintf(w, "Error fetching layout: %s", err)
+			return
+		}
+
+		w.WriteHeader(201)
+		json.NewEncoder(w).Encode(boardLayouts)
 	}
 }

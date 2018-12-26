@@ -18,6 +18,7 @@ type State struct {
 
 type GameState struct {
 	ID                   string `dynamo:"ID,hash"`
+	BoardID              string
 	CreatedAt            time.Time
 	UpdatedAt            time.Time
 	CurrentClueNumber    int
@@ -56,10 +57,11 @@ func (g GuessState) ClueDirection() string {
 	return strings.Split(g.PlayerClueID, "-")[2]
 }
 
-func (state *State) CreateGame() (string, error) {
+func (state *State) CreateGame(boardID string) (string, error) {
 	id := GameID()
 	w := GameState{
 		ID:                   id,
+		BoardID:              boardID,
 		CreatedAt:            time.Now(),
 		UpdatedAt:            time.Now(),
 		CurrentClueNumber:    0,
@@ -117,6 +119,23 @@ func (state *State) CreateGuess(gameID, name string, clueNumber int, clueDirecti
 		Run()
 }
 
+func (state *State) CreateBoardLayout(w BoardLayout) error {
+	return state.db.Table("BoardLayouts").Put(w).Run()
+}
+
+func (state *State) GetBoardLayout(id string) (*BoardLayout, error) {
+	var result BoardLayout
+	err := state.db.Table("BoardLayouts").
+		Get("ID", id).
+		One(&result)
+	return &result, err
+}
+func (state *State) GetBoardLayouts() ([]BoardLayout, error) {
+	result := []BoardLayout{}
+	err := state.db.Table("BoardLayouts").Scan().All(&result)
+	return result, err
+}
+
 func (state *State) GetGame(gameID string) (*GameState, error) {
 	var result GameState
 	err := state.db.Table("GameStates").
@@ -159,6 +178,11 @@ func NewState() *State {
 	}
 
 	err = db.CreateTable("GuessStates", GuessState{}).Run()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	err = db.CreateTable("BoardLayouts", BoardLayout{}).Run()
 	if err != nil {
 		fmt.Println(err)
 	}
