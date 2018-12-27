@@ -35,14 +35,14 @@ func PostGame(state *State) http.HandlerFunc {
 			return
 		}
 
-		id, err := state.CreateGame(gameRequest.BoardID)
+		id, err := state.CreateGame(r.Context(), gameRequest.BoardID)
 		if err != nil {
 			w.WriteHeader(500)
 			fmt.Fprintf(w, "Error creating game: %s", err)
 			return
 		}
 
-		game, err := FetchGame(state, id)
+		game, err := FetchGame(r.Context(), state, id)
 		if err != nil {
 			w.WriteHeader(500)
 			fmt.Fprintf(w, "Error fetching game state: %s", err)
@@ -57,7 +57,7 @@ func PostGame(state *State) http.HandlerFunc {
 // PostPlayer creates new player in game
 func PostPlayer(state *State) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		game, err := FetchGame(state, mux.Vars(r)["id"])
+		game, err := FetchGame(r.Context(), state, mux.Vars(r)["id"])
 		if err != nil {
 			w.WriteHeader(500)
 			fmt.Fprintf(w, "Error fetching game state: %s", err)
@@ -73,14 +73,14 @@ func PostPlayer(state *State) http.HandlerFunc {
 			return
 		}
 
-		err = state.CreatePlayer(game.ID, playerRequest.Name)
+		err = state.CreatePlayer(r.Context(), game.ID, playerRequest.Name)
 		if err != nil {
 			w.WriteHeader(500)
 			fmt.Fprintf(w, "Error creating game: %s", err)
 			return
 		}
 
-		game, err = FetchGame(state, game.ID)
+		game, err = FetchGame(r.Context(), state, game.ID)
 		if err != nil {
 			w.WriteHeader(500)
 			fmt.Fprintf(w, "Error fetching game state: %s", err)
@@ -95,7 +95,7 @@ func PostPlayer(state *State) http.HandlerFunc {
 // PostGuess creates new guess
 func PostGuess(state *State) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		game, err := FetchGame(state, mux.Vars(r)["id"])
+		game, err := FetchGame(r.Context(), state, mux.Vars(r)["id"])
 		if err != nil {
 			w.WriteHeader(500)
 			fmt.Fprintf(w, "Error fetching game state: %s", err)
@@ -124,7 +124,7 @@ func PostGuess(state *State) http.HandlerFunc {
 			return
 		}
 
-		err = state.CreateGuess(game.ID, guessRequest.PlayerName, game.CurrentClue.Number, game.CurrentClue.Direction, guessRequest.Guess)
+		err = state.CreateGuess(r.Context(), game.ID, guessRequest.PlayerName, game.CurrentClue.Number, game.CurrentClue.Direction, guessRequest.Guess)
 		if err != nil {
 			w.WriteHeader(500)
 			fmt.Fprintf(w, "Error creating guess: %s", err)
@@ -133,7 +133,7 @@ func PostGuess(state *State) http.HandlerFunc {
 
 		// If this player was the last one we were waiting on, continue
 		if len(game.CurrentClue.WaitingOnPlayers) == 0 || (len(game.CurrentClue.WaitingOnPlayers) == 1 && game.CurrentClue.WaitingOnPlayers[0] == guessRequest.PlayerName) {
-			err := IncrementClue(state, game)
+			err := IncrementClue(r.Context(), state, game)
 			if err != nil {
 				w.WriteHeader(500)
 				fmt.Fprintf(w, "Error incrementing clue: %s", err)
@@ -141,7 +141,7 @@ func PostGuess(state *State) http.HandlerFunc {
 			}
 		}
 
-		game, err = FetchGame(state, game.ID)
+		game, err = FetchGame(r.Context(), state, game.ID)
 		if err != nil {
 			w.WriteHeader(500)
 			fmt.Fprintf(w, "Error fetching game state: %s", err)
@@ -156,14 +156,14 @@ func PostGuess(state *State) http.HandlerFunc {
 // GetGame gets current game state
 func GetGame(state *State) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		game, err := FetchGame(state, mux.Vars(r)["id"])
+		game, err := FetchGame(r.Context(), state, mux.Vars(r)["id"])
 		if err != nil {
 			w.WriteHeader(500)
 			fmt.Fprintf(w, "Error fetching game state: %s", err)
 			return
 		}
 
-		if err := CheckTimers(state, game); err != nil {
+		if err := CheckTimers(r.Context(), state, game); err != nil {
 			log.Println("Timer error:", err)
 		}
 
@@ -174,7 +174,7 @@ func GetGame(state *State) http.HandlerFunc {
 // GetLayouts uploads a board
 func GetLayouts(state *State) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		boardLayouts, err := state.GetBoardLayouts()
+		boardLayouts, err := state.GetBoardLayouts(r.Context())
 		if err != nil {
 			w.WriteHeader(500)
 			fmt.Fprintf(w, "Error fetching layout: %s", err)
@@ -224,7 +224,7 @@ func PostLayout(state *State) http.HandlerFunc {
 			return
 		}
 
-		boardLayouts, err := state.GetBoardLayouts()
+		boardLayouts, err := state.GetBoardLayouts(r.Context())
 		if err != nil {
 			w.WriteHeader(500)
 			fmt.Fprintf(w, "Error fetching layout: %s", err)

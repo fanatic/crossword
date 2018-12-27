@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -56,7 +57,7 @@ func (g GuessState) ClueDirection() string {
 	return strings.Split(g.PlayerClueID, "-")[2]
 }
 
-func (state *State) CreateGame(boardID string) (string, error) {
+func (state *State) CreateGame(ctx context.Context, boardID string) (string, error) {
 	id := GameID()
 	w := GameState{
 		ID:                   id,
@@ -67,27 +68,27 @@ func (state *State) CreateGame(boardID string) (string, error) {
 		CurrentClueDirection: "across",
 		CurrentClueExpiresAt: time.Now().Add(10 * time.Minute),
 	}
-	return id, state.db.Table("GameStates").Put(w).If("attribute_not_exists(ID)").Run()
+	return id, state.db.Table("GameStates").Put(w).If("attribute_not_exists(ID)").RunWithContext(ctx)
 }
 
-func (state *State) UpdateGameClue(id string, number int, direction string) error {
+func (state *State) UpdateGameClue(ctx context.Context, id string, number int, direction string) error {
 	return state.db.Table("GameStates").
 		Update("ID", id).
 		Set("UpdatedAt", time.Now()).
 		Set("CurrentClueNumber", number).
 		Set("CurrentClueDirection", direction).
 		Set("CurrentClueExpiresAt", time.Now().Add(30*time.Second)).
-		Run()
+		RunWithContext(ctx)
 }
 
-func (state *State) CreatePlayer(gameID, name string) error {
+func (state *State) CreatePlayer(ctx context.Context, gameID, name string) error {
 	w := PlayerState{
 		GameID:     gameID,
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 		PlayerName: name,
 	}
-	err := state.db.Table("PlayerStates").Put(w).If("attribute_not_exists(PlayerName)").Run()
+	err := state.db.Table("PlayerStates").Put(w).If("attribute_not_exists(PlayerName)").RunWithContext(ctx)
 	if err == nil {
 		return nil
 	}
@@ -95,10 +96,10 @@ func (state *State) CreatePlayer(gameID, name string) error {
 	return state.db.Table("PlayerStates").Update("GameID", gameID).
 		Range("PlayerName", name).
 		Set("UpdatedAt", time.Now()).
-		Run()
+		RunWithContext(ctx)
 }
 
-func (state *State) CreateGuess(gameID, name string, clueNumber int, clueDirection, guess string) error {
+func (state *State) CreateGuess(ctx context.Context, gameID, name string, clueNumber int, clueDirection, guess string) error {
 	w := GuessState{
 		GameID:       gameID,
 		CreatedAt:    time.Now(),
@@ -106,7 +107,7 @@ func (state *State) CreateGuess(gameID, name string, clueNumber int, clueDirecti
 		PlayerClueID: PlayerClueID(name, clueNumber, clueDirection),
 		Guess:        guess,
 	}
-	err := state.db.Table("GuessStates").Put(w).If("attribute_not_exists(Guess)").Run()
+	err := state.db.Table("GuessStates").Put(w).If("attribute_not_exists(Guess)").RunWithContext(ctx)
 	if err == nil {
 		return nil
 	}
@@ -115,47 +116,47 @@ func (state *State) CreateGuess(gameID, name string, clueNumber int, clueDirecti
 		Range("PlayerClueID", PlayerClueID(name, clueNumber, clueDirection)).
 		Set("Guess", guess).
 		Set("UpdatedAt", time.Now()).
-		Run()
+		RunWithContext(ctx)
 }
 
 func (state *State) CreateBoardLayout(w BoardLayout) error {
 	return state.db.Table("BoardLayouts").Put(w).Run()
 }
 
-func (state *State) GetBoardLayout(id string) (*BoardLayout, error) {
+func (state *State) GetBoardLayout(ctx context.Context, id string) (*BoardLayout, error) {
 	var result BoardLayout
 	err := state.db.Table("BoardLayouts").
 		Get("ID", id).
-		One(&result)
+		OneWithContext(ctx, &result)
 	return &result, err
 }
-func (state *State) GetBoardLayouts() ([]BoardLayout, error) {
+func (state *State) GetBoardLayouts(ctx context.Context) ([]BoardLayout, error) {
 	result := []BoardLayout{}
-	err := state.db.Table("BoardLayouts").Scan().All(&result)
+	err := state.db.Table("BoardLayouts").Scan().AllWithContext(ctx, &result)
 	return result, err
 }
 
-func (state *State) GetGame(gameID string) (*GameState, error) {
+func (state *State) GetGame(ctx context.Context, gameID string) (*GameState, error) {
 	var result GameState
 	err := state.db.Table("GameStates").
 		Get("ID", gameID).
-		One(&result)
+		OneWithContext(ctx, &result)
 	return &result, err
 }
 
-func (state *State) GetPlayers(gameID string) ([]PlayerState, error) {
+func (state *State) GetPlayers(ctx context.Context, gameID string) ([]PlayerState, error) {
 	var result []PlayerState
 	err := state.db.Table("PlayerStates").
 		Get("GameID", gameID).
-		All(&result)
+		AllWithContext(ctx, &result)
 	return result, err
 }
 
-func (state *State) GetGuesses(gameID string) ([]GuessState, error) {
+func (state *State) GetGuesses(ctx context.Context, gameID string) ([]GuessState, error) {
 	var result []GuessState
 	err := state.db.Table("GuessStates").
 		Get("GameID", gameID).
-		All(&result)
+		AllWithContext(ctx, &result)
 	return result, err
 }
 
