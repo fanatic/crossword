@@ -46,7 +46,7 @@ type Clue struct {
 	ExpiresAt        *time.Time `json:"expires_at,omitempty"`
 }
 
-func WaitingOnPlayers(currentPlayers []Player, guesses []Guess) []string {
+func WaitingOnPlayers(currentPlayers []Player, guesses []Guess, currentRound int) []string {
 	players := map[string]bool{}
 	for _, p := range currentPlayers {
 		if p.Active {
@@ -54,7 +54,9 @@ func WaitingOnPlayers(currentPlayers []Player, guesses []Guess) []string {
 		}
 	}
 	for _, g := range guesses {
-		delete(players, g.Player.Name)
+		if currentRound == g.LatestRound {
+			delete(players, g.Player.Name)
+		}
 	}
 
 	waitingOnPlayers := []string{}
@@ -185,7 +187,7 @@ func fetchGameReal(ctx context.Context, state *State, gameID string) (*Game, err
 	})
 
 	currentClueID := fmt.Sprintf("%d-%s", g.CurrentClue.Number, g.CurrentClue.Direction)
-	g.CurrentClue.WaitingOnPlayers = WaitingOnPlayers(g.CurrentPlayers, clueGuesses[currentClueID])
+	g.CurrentClue.WaitingOnPlayers = WaitingOnPlayers(g.CurrentPlayers, clueGuesses[currentClueID], g.CurrentRound)
 	g.CurrentClue.Answer = board.MaskAnswer(g.CurrentClue.Answer, g.CurrentClue.Number, g.CurrentClue.Direction, grid)
 
 	g.BoardLayout.Grid = grid
@@ -254,17 +256,21 @@ func IncrementClue(ctx context.Context, state *State, game *Game) error {
 	}
 
 	round := game.CurrentRound
+	nextRound := false
 	number, direction := game.BoardLayout.Next(game.CurrentClue.Number, game.CurrentClue.Direction)
 	for i := 0; i <= len(board.Answers.Across)-1+len(board.Answers.Down)-1; i++ {
 		// Increment round
-		if game.LastClue.Direction == "down" && game.CurrentClue.Direction == "across" {
-			round++
+		if game.CurrentClue.Direction == "down" && direction == "across" {
+			nextRound = true
 		}
 		// Skip over answered clues
 		if !ClueAnswered(state, game, board, number, direction) {
 			break
 		}
 		number, direction = game.BoardLayout.Next(number, direction)
+	}
+	if nextRound {
+		round++
 	}
 
 	return state.UpdateGameClue(ctx, game.ID, number, direction, game.CurrentClue.Number, game.CurrentClue.Direction, round)
