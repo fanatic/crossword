@@ -11,7 +11,7 @@ class Mobile extends Component {
     setGameID: PropTypes.func.isRequired,
     player_name: PropTypes.string.isRequired,
     postGuess: PropTypes.func.isRequired,
-    postGuessResponse: PropTypes.instanceOf(PromiseState)
+    postGuessResponse: PropTypes.instanceOf(PromiseState),
   };
 
   constructor(props) {
@@ -25,7 +25,7 @@ class Mobile extends Component {
     const name = target.name;
 
     this.setState({
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -47,6 +47,19 @@ class Mobile extends Component {
   render() {
     const { player_name, game } = this.props;
 
+    let seconds_left = 0;
+    if (game && game.current_clue) {
+      const expires = new Date(game.current_clue.expires_at);
+      const now = new Date();
+      seconds_left = Math.round((+expires - +now) / 1000);
+    }
+
+    let waiting_on_players;
+    if (game && game.current_clue && game.current_clue.waiting_on_players) {
+      waiting_on_players = game.current_clue.waiting_on_players;
+      waiting_on_players.sort();
+    }
+
     return (
       <div>
         <h2>
@@ -67,14 +80,16 @@ class Mobile extends Component {
                 onChange={this.handleInputChange}
                 minLength={game.current_clue.answer.length}
                 maxLength={game.current_clue.answer.length}
+                autocomplete="off"
+                style={{ fontSize: '16px' }}
               />
               <input type="submit" value="Guess" />
             </form>
             <br />
-            <small>
-              Waiting for{' '}
-              {game.current_clue.waiting_on_players ? game.current_clue.waiting_on_players.join(', ') : 'your answer'}.
-            </small>
+            <small>Waiting for {waiting_on_players ? waiting_on_players.join(', ') : 'your answer'}.</small>
+            <p>
+              <span className="countdown"> {seconds_left}s </span>
+            </p>
           </React.Fragment>
         )}
       </div>
@@ -89,7 +104,7 @@ export default connect(props => ({
       method: 'POST',
       body: JSON.stringify(body),
       force: true,
-      refreshing: true
-    }
-  })
+      refreshing: true,
+    },
+  }),
 }))(Mobile);

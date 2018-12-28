@@ -8,7 +8,7 @@ export default class GameState extends Component {
     super(props);
     this.state = {
       game_id: localStorage.getItem('game_id'),
-      player_name: localStorage.getItem('player_name')
+      player_name: localStorage.getItem('player_name'),
     };
   }
 
@@ -29,18 +29,31 @@ export default class GameState extends Component {
 
 class GameWrapper extends Component {
   static propTypes = {
-    getGame: PropTypes.instanceOf(PromiseState).isRequired
+    getGame: PropTypes.instanceOf(PromiseState).isRequired,
   };
+  constructor(props) {
+    super(props);
+    this.state = {
+      game: null,
+    };
+  }
+
+  componentWillReceiveProps(nextProps) {
+    const { getGame } = nextProps;
+    if (getGame.fulfilled && !getGame.value.error) {
+      this.setState({ game: getGame.value });
+    }
+    if (nextProps.game_id != this.props.game_id && nextProps.game_id == '') {
+      this.setState({ game: null });
+    }
+  }
 
   render() {
-    const { player_name, getGame, children } = this.props;
+    const { player_name, children } = this.props;
 
-    let game;
-    if (getGame.fulfilled) {
-      game = getGame.value;
-    }
-
-    const childrenWithProps = React.Children.map(children, child => React.cloneElement(child, { player_name, game }));
+    const childrenWithProps = React.Children.map(children, child =>
+      React.cloneElement(child, { player_name, game: this.state.game }),
+    );
 
     return <div>{childrenWithProps}</div>;
   }
@@ -49,6 +62,6 @@ class GameWrapper extends Component {
 export const ConnectedGameWrapper = connect(props => ({
   getGame: {
     url: `https://crossword-api.jasonparrott.com/games/${props.game_id}`,
-    refreshInterval: 1000
-  }
+    refreshInterval: 1000,
+  },
 }))(GameWrapper);

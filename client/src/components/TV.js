@@ -5,7 +5,7 @@ import './TV.css';
 
 export default class TV extends Component {
   static propTypes = {
-    game: PropTypes.object.isRequired
+    game: PropTypes.object.isRequired,
   };
 
   render() {
@@ -17,15 +17,21 @@ export default class TV extends Component {
     const now = new Date();
     const seconds_left = Math.round((+expires - +now) / 1000);
 
+    let leaders;
+    if (game.current_players) {
+      leaders = game.current_players;
+      leaders.sort((a, b) => b.current_score - a.current_score);
+    }
+
     return (
       <div className="App">
         <div className="tv-layout">
           <div className="tv-left">
-            {game.current_players && (
+            {leaders && (
               <div>
                 <span className="score-header">Score</span>
                 <ul className="scoreboard">
-                  {game.current_players.map(p => (
+                  {leaders.map(p => (
                     <li key={p.name}>
                       {p.name}: {p.current_score} pts {!p.active && '(inactive)'}
                     </li>

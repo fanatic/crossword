@@ -62,6 +62,28 @@ func WaitingOnPlayers(currentPlayers []Player, guesses []Guess) []string {
 }
 
 func FetchGame(ctx context.Context, state *State, gameID string) (*Game, error) {
+	var result *Game
+	var err error
+	deadline, _ := ctx.Deadline()
+	deadline = deadline.Add(-100 * time.Millisecond)
+	timeoutChannel := time.After(time.Until(deadline))
+
+	done := make(chan struct{})
+	go func() {
+		result, err = fetchGameReal(ctx, state, gameID)
+		close(done)
+	}()
+
+	select {
+	case <-timeoutChannel:
+		return nil, fmt.Errorf("Timed out")
+
+	case <-done:
+		return result, err
+	}
+}
+
+func fetchGameReal(ctx context.Context, state *State, gameID string) (*Game, error) {
 	game, err := state.GetGame(ctx, gameID)
 	if err != nil {
 		return nil, err
@@ -147,16 +169,16 @@ func FetchGame(ctx context.Context, state *State, gameID string) (*Game, error) 
 				Name:         player.PlayerName,
 				CurrentScore: 0,
 				Guesses:      playerGuesses[player.PlayerName],
-				Active:       false,
+				Active:       true,
 			}
 			for _, guess := range p.Guesses {
 				p.CurrentScore += board.CalculateScore(guess)
 			}
-			for _, guess := range g.LastClue.Guesses {
-				if guess.Player.Name == player.PlayerName {
-					p.Active = true
-				}
-			}
+			// for _, guess := range g.LastClue.Guesses {
+			// 	if guess.Player.Name == player.PlayerName {
+			// 		p.Active = true
+			// 	}
+			// }
 			g.CurrentPlayers = append(g.CurrentPlayers, p)
 		}
 		return nil

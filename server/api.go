@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/aws/aws-xray-sdk-go/xray"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
@@ -20,7 +21,11 @@ func NewRouter() http.Handler {
 	router.HandleFunc("/games/{id}/guesses", PostGuess(state)).Methods("POST")
 	router.HandleFunc("/layouts", GetLayouts(state)).Methods("GET")
 	router.HandleFunc("/layouts", PostLayout(state)).Methods("POST")
-	return handlers.CORS(handlers.AllowedHeaders([]string{"Accept", "Accept-Language", "Content-Language", "Origin", "Content-Type"}))(router)
+
+	return xray.Handler(
+		xray.NewFixedSegmentNamer("crossword-app"),
+		handlers.CORS(
+			handlers.AllowedHeaders([]string{"Accept", "Accept-Language", "Content-Language", "Origin", "Content-Type"}))(router))
 }
 
 // PostGame creates a new game state
@@ -44,6 +49,11 @@ func PostGame(state *State) http.HandlerFunc {
 
 		game, err := FetchGame(r.Context(), state, id)
 		if err != nil {
+			if err.Error() == "Timed out" {
+				w.WriteHeader(200)
+				fmt.Fprintf(w, `{"error": "Timed out"}`)
+				return
+			}
 			w.WriteHeader(500)
 			fmt.Fprintf(w, "Error fetching game state: %s", err)
 			return
@@ -82,6 +92,11 @@ func PostPlayer(state *State) http.HandlerFunc {
 
 		game, err = FetchGame(r.Context(), state, game.ID)
 		if err != nil {
+			if err.Error() == "Timed out" {
+				w.WriteHeader(200)
+				fmt.Fprintf(w, `{"error": "Timed out"}`)
+				return
+			}
 			w.WriteHeader(500)
 			fmt.Fprintf(w, "Error fetching game state: %s", err)
 			return
@@ -97,6 +112,11 @@ func PostGuess(state *State) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		game, err := FetchGame(r.Context(), state, mux.Vars(r)["id"])
 		if err != nil {
+			if err.Error() == "Timed out" {
+				w.WriteHeader(200)
+				fmt.Fprintf(w, `{"error": "Timed out"}`)
+				return
+			}
 			w.WriteHeader(500)
 			fmt.Fprintf(w, "Error fetching game state: %s", err)
 			return
@@ -158,6 +178,11 @@ func GetGame(state *State) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		game, err := FetchGame(r.Context(), state, mux.Vars(r)["id"])
 		if err != nil {
+			if err.Error() == "Timed out" {
+				w.WriteHeader(200)
+				fmt.Fprintf(w, `{"error": "Timed out"}`)
+				return
+			}
 			w.WriteHeader(500)
 			fmt.Fprintf(w, "Error fetching game state: %s", err)
 			return
