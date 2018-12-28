@@ -82,6 +82,9 @@ class Mobile extends Component {
                 maxLength={game.current_clue.answer.length}
                 autocomplete="off"
                 style={{ fontSize: '16px' }}
+                autocorrect="off"
+                autocapitalize="off"
+                spellcheck="false"
               />
               <input type="submit" value="Guess" />
             </form>
