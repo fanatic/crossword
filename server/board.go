@@ -125,12 +125,12 @@ func (b *BoardLayout) CorrectAnswer(clueNumber int, clueDirection string) string
 	return b.Answers.Down[clueNumber]
 }
 
-func (b *BoardLayout) CalculateScore(guess Guess) int {
-	if strings.ToUpper(guess.Guess) != b.CorrectAnswer(guess.Clue.Number, guess.Clue.Direction) {
-		return 0
+func (b *BoardLayout) CalculateScore(guess string, number int, direction string) (int, bool) {
+	if strings.ToUpper(guess) != b.CorrectAnswer(number, direction) {
+		return 0, false
 	}
 
-	return 100
+	return 100, true
 }
 
 func (b *BoardLayout) MaskAnswer(answer string, currentClueNumber int, currentClueDirection string, grid []string) string {

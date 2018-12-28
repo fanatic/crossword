@@ -16,6 +16,7 @@ type Game struct {
 	LastClue       Clue         `json:"last_clue"`
 	CurrentClue    Clue         `json:"current_clue"`
 	CurrentPlayers []Player     `json:"current_players"`
+	CurrentRound   int          `json:"-"`
 }
 
 type Player struct {
@@ -31,6 +32,8 @@ type Guess struct {
 	Guess       string    `json:"guess"`
 	Score       int       `json:"score"`
 	SubmittedAt time.Time `json:"submitted_at"`
+	IsCorrect   bool      `json:"-"`
+	LatestRound int       `json:"-"`
 }
 
 type Clue struct {
@@ -113,11 +116,13 @@ func fetchGameReal(ctx context.Context, state *State, gameID string) (*Game, err
 				Player:      Player{Name: guess.PlayerName()},
 				Guess:       guess.Guess,
 				SubmittedAt: guess.UpdatedAt,
+				LatestRound: guess.Round(),
 			}
-			g.Score = board.CalculateScore(g)
-			clueID := fmt.Sprintf("%d-%s", guess.ClueNumber(), guess.ClueDirection())
-			clueGuesses[clueID] = append(clueGuesses[clueID], g)
-			playerGuesses[guess.PlayerName()] = append(playerGuesses[guess.PlayerName()], g)
+			g.Score, g.IsCorrect = board.CalculateScore(g.Guess, g.Clue.Number, g.Clue.Direction)
+
+			clueID := fmt.Sprintf("%d-%s", g.Clue.Number, g.Clue.Direction)
+			clueGuesses[clueID] = AddOrSetGuess(board, g, clueGuesses[clueID])
+			playerGuesses[guess.PlayerName()] = AddOrSetGuess(board, g, playerGuesses[guess.PlayerName()])
 		}
 		return nil
 	})
@@ -155,7 +160,7 @@ func fetchGameReal(ctx context.Context, state *State, gameID string) (*Game, err
 		ID:             game.ID,
 		BoardLayout:    board,
 		CurrentClue:    board.GetClue(game.CurrentClueNumber, game.CurrentClueDirection, &game.CurrentClueExpiresAt),
-		LastClue:       board.GetLastClue(game.CurrentClueNumber, game.CurrentClueDirection),
+		LastClue:       board.GetClue(game.LastClueNumber, game.LastClueDirection, nil),
 		CurrentPlayers: []Player{},
 	}
 
@@ -171,14 +176,9 @@ func fetchGameReal(ctx context.Context, state *State, gameID string) (*Game, err
 				Guesses:      playerGuesses[player.PlayerName],
 				Active:       true,
 			}
-			for _, guess := range p.Guesses {
-				p.CurrentScore += board.CalculateScore(guess)
+			for _, g := range p.Guesses {
+				p.CurrentScore += g.Score
 			}
-			// for _, guess := range g.LastClue.Guesses {
-			// 	if guess.Player.Name == player.PlayerName {
-			// 		p.Active = true
-			// 	}
-			// }
 			g.CurrentPlayers = append(g.CurrentPlayers, p)
 		}
 		return nil
@@ -191,6 +191,25 @@ func fetchGameReal(ctx context.Context, state *State, gameID string) (*Game, err
 	g.BoardLayout.Grid = grid
 	g.BoardLayout.Answers = nil
 	return &g, nil
+}
+
+func AddOrSetGuess(board *BoardLayout, g Guess, guesses []Guess) []Guess {
+	for _, guess := range guesses {
+		if guess.Player.Name == g.Player.Name && guess.Clue.Number == g.Clue.Number && guess.Clue.Direction == g.Clue.Direction {
+			// Merge new round with previous round
+			if !guess.IsCorrect && g.IsCorrect {
+				guess.IsCorrect = true
+				guess.Score = g.Score
+			} else if !guess.IsCorrect {
+				if guess.LatestRound < g.LatestRound && !guess.IsCorrect {
+					guess.Guess = g.Guess
+					guess.LatestRound = g.LatestRound
+				}
+			}
+			return guesses
+		}
+	}
+	return append(guesses, g)
 }
 
 func InitializeGrid(numRows, numCols int, grid []string, gridNums []int) []string {
@@ -234,8 +253,13 @@ func IncrementClue(ctx context.Context, state *State, game *Game) error {
 		return err
 	}
 
+	round := game.CurrentRound
 	number, direction := game.BoardLayout.Next(game.CurrentClue.Number, game.CurrentClue.Direction)
 	for i := 0; i <= len(board.Answers.Across)-1+len(board.Answers.Down)-1; i++ {
+		// Increment round
+		if game.LastClue.Direction == "down" && game.CurrentClue.Direction == "across" {
+			round++
+		}
 		// Skip over answered clues
 		if !ClueAnswered(state, game, board, number, direction) {
 			break
@@ -243,7 +267,7 @@ func IncrementClue(ctx context.Context, state *State, game *Game) error {
 		number, direction = game.BoardLayout.Next(number, direction)
 	}
 
-	return state.UpdateGameClue(ctx, game.ID, number, direction)
+	return state.UpdateGameClue(ctx, game.ID, number, direction, game.CurrentClue.Number, game.CurrentClue.Direction, round)
 }
 
 func ClueAnswered(state *State, game *Game, board *BoardLayout, clueNumber int, clueDirection string) bool {

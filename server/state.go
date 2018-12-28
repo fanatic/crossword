@@ -24,6 +24,9 @@ type GameState struct {
 	CurrentClueNumber    int
 	CurrentClueDirection string
 	CurrentClueExpiresAt time.Time
+	CurrentRound         int
+	LastClueNumber       int
+	LastClueDirection    string
 }
 
 type PlayerState struct {
@@ -41,8 +44,8 @@ type GuessState struct {
 	Guess        string
 }
 
-func PlayerClueID(name string, number int, direction string) string {
-	return fmt.Sprintf("%s-%d-%s", name, number, direction)
+func PlayerClueIDRound(name string, number int, direction string, round int) string {
+	return fmt.Sprintf("%s-%d-%s-%d", name, number, direction, round)
 }
 
 func (g GuessState) PlayerName() string {
@@ -56,6 +59,10 @@ func (g GuessState) ClueNumber() int {
 func (g GuessState) ClueDirection() string {
 	return strings.Split(g.PlayerClueID, "-")[2]
 }
+func (g GuessState) Round() int {
+	n, _ := strconv.Atoi(strings.Split(g.PlayerClueID, "-")[3])
+	return n
+}
 
 func (state *State) CreateGame(ctx context.Context, boardID string) (string, error) {
 	id := GameID()
@@ -67,17 +74,23 @@ func (state *State) CreateGame(ctx context.Context, boardID string) (string, err
 		CurrentClueNumber:    0,
 		CurrentClueDirection: "across",
 		CurrentClueExpiresAt: time.Now().Add(10 * time.Minute),
+		LastClueNumber:       0,
+		LastClueDirection:    "across",
+		CurrentRound:         0,
 	}
 	return id, state.db.Table("GameStates").Put(w).If("attribute_not_exists(ID)").RunWithContext(ctx)
 }
 
-func (state *State) UpdateGameClue(ctx context.Context, id string, number int, direction string) error {
+func (state *State) UpdateGameClue(ctx context.Context, id string, number int, direction string, lastNumber int, lastDirection string, round int) error {
 	return state.db.Table("GameStates").
 		Update("ID", id).
 		Set("UpdatedAt", time.Now()).
 		Set("CurrentClueNumber", number).
 		Set("CurrentClueDirection", direction).
 		Set("CurrentClueExpiresAt", time.Now().Add(30*time.Second)).
+		Set("LastClueNumber", lastNumber).
+		Set("LastClueDirection", direction).
+		Set("CurrentRound", round).
 		RunWithContext(ctx)
 }
 
@@ -99,12 +112,12 @@ func (state *State) CreatePlayer(ctx context.Context, gameID, name string) error
 		RunWithContext(ctx)
 }
 
-func (state *State) CreateGuess(ctx context.Context, gameID, name string, clueNumber int, clueDirection, guess string) error {
+func (state *State) CreateGuess(ctx context.Context, gameID, name string, clueNumber int, clueDirection, guess string, round int) error {
 	w := GuessState{
 		GameID:       gameID,
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
-		PlayerClueID: PlayerClueID(name, clueNumber, clueDirection),
+		PlayerClueID: PlayerClueIDRound(name, clueNumber, clueDirection, round),
 		Guess:        guess,
 	}
 	err := state.db.Table("GuessStates").Put(w).If("attribute_not_exists(Guess)").RunWithContext(ctx)
@@ -113,7 +126,7 @@ func (state *State) CreateGuess(ctx context.Context, gameID, name string, clueNu
 	}
 
 	return state.db.Table("GuessStates").Update("GameID", gameID).
-		Range("PlayerClueID", PlayerClueID(name, clueNumber, clueDirection)).
+		Range("PlayerClueID", PlayerClueIDRound(name, clueNumber, clueDirection, round)).
 		Set("Guess", guess).
 		Set("UpdatedAt", time.Now()).
 		RunWithContext(ctx)

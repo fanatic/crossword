@@ -144,7 +144,7 @@ func PostGuess(state *State) http.HandlerFunc {
 			return
 		}
 
-		err = state.CreateGuess(r.Context(), game.ID, guessRequest.PlayerName, game.CurrentClue.Number, game.CurrentClue.Direction, guessRequest.Guess)
+		err = state.CreateGuess(r.Context(), game.ID, guessRequest.PlayerName, game.CurrentClue.Number, game.CurrentClue.Direction, guessRequest.Guess, game.CurrentRound)
 		if err != nil {
 			w.WriteHeader(500)
 			fmt.Fprintf(w, "Error creating guess: %s", err)
