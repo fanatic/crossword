@@ -11,7 +11,7 @@ action "Frontend (S3)" {
   args = ["cd client ; yarn install && yarn deploy"]
   secrets = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]
   env = {
-    AWS_REGION = "us-east-2"
+    AWS_DEFAULT_REGION = "us-east-2"
   }
 }
 
@@ -20,6 +20,6 @@ action "Backend (Lambda)" {
   args = ["cd server; ./deploy.sh"]
   secrets = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]
   env = {
-    AWS_REGION = "us-east-2"
+    AWS_DEFAULT_REGION = "us-east-2"
   }
 }
