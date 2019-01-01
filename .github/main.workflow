@@ -7,13 +7,14 @@ workflow "Build/Deploy" {
 }
 
 action "Frontend (S3)" {
-  uses = "actions/aws/cli@8d31870"
-  args = "sh -c \"cd client ; yarn deploy\""
+  uses = "./.github/frontend"
+  args = "cd client ; yarn deploy"
   secrets = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]
 }
 
 action "Backend (Lambda)" {
-  uses = "actions/aws/cli@8d31870"
-  args = "sh -c \"cd server; ./deploy.sh\""
+  uses = "./.github/backend"
+  args = "cd server; ./deploy.sh"
   secrets = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]
 }
+

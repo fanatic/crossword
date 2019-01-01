@@ -16,3 +16,4 @@ handler.zip
 lambda_handler
 !lambda_handler/
 .env
+*.un~
