@@ -8,7 +8,7 @@ workflow "Build/Deploy" {
 
 action "Frontend (S3)" {
   uses = "./.github/frontend"
-  args = ["cd client ; yarn deploy"]
+  args = ["cd client ; yarn install && yarn deploy"]
   secrets = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]
 }
 
