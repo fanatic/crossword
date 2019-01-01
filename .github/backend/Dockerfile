@@ -5,8 +5,5 @@ RUN apt-get update -y && \
     easy_install --upgrade six && \
     pip install awscli
 
-COPY "entrypoint.sh" "/entrypoint.sh"
-RUN chmod +x /entrypoint.sh
-
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT "sh -l -c"
 
