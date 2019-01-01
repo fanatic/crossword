@@ -1,4 +1,4 @@
-FROM node:8.4.0
+FROM node:6.9
 
 RUN apt-get update && \
     apt-get install python-dev python-pip -y && \
