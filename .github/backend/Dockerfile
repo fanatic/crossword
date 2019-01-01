@@ -3,8 +3,7 @@ FROM golang:1.11
 RUN apt-get update -y && \
     apt-get install python-dev python-pip -y && \
     easy_install --upgrade six && \
-    pip install awscli && \
-    npm i -g yarn@v1.3.2
+    pip install awscli
 
 COPY "entrypoint.sh" "/entrypoint.sh"
 RUN chmod +x /entrypoint.sh
