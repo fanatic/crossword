@@ -5,5 +5,5 @@ RUN apt-get update -y && \
     easy_install --upgrade six && \
     pip install awscli
 
-ENTRYPOINT "sh -l -c"
+ENTRYPOINT ["/bin/sh", "-l", "-c"]
 

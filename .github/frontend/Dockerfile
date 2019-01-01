@@ -6,4 +6,4 @@ RUN apt-get update && \
     pip install awscli && \
     npm i -g yarn@v1.3.2
 
-ENTRYPOINT "sh -l -c"
+ENTRYPOINT ["/bin/sh", "-l", "-c"]
