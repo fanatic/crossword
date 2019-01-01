@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.factset.com/factset-io/aws-xray-sdk-go/xray"
+	"github.com/aws/aws-xray-sdk-go/xray"
 )
 
 type Game struct {
