@@ -81,7 +81,7 @@ class Home extends Component {
 
     return (
       <div>
-        <h2>Home Screen</h2>
+        <h2>Home Screen Bitches!</h2>
         <form onSubmit={this.handleHost}>
           <input type="text" placeholder="Name" name="name" value={this.state.name} onChange={this.handleInputChange} />
           <select name="board_id" value={this.state.board_id} onChange={this.handleInputChange}>
